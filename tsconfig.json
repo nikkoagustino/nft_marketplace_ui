@@ -1,5 +1,9 @@
 {
   "compilerOptions": {
+    "baseUrl": "node_modules",
+    "paths": {
+      "@solana/*": ["@solana/*"],
+    },
     "target": "es5",
     "lib": [
       "dom",

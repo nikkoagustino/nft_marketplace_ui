@@ -4,7 +4,31 @@ import KomoCoinImg from "../assets/img/komo-coin.webp"
 import KomoNftImg from "../assets/img/nft/9950.png"
 import { Link } from 'react-router-dom';
 
+import { getListedNfts } from "../app/api/index";
+
+import * as anchor from "@project-serum/anchor";
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+
+const opts = {
+    preflightCommitment: "processed"
+}
+
 const Marketplace = () => {
+
+    const { connection } = useConnection();
+    const { publicKey, signTransaction } = useWallet();
+    const wallet = useWallet();
+
+    async function getProvider() {
+        const provider = new anchor.Provider(
+            connection, wallet, opts.preflightCommitment,
+        );
+        return provider;
+    }
+
+    const [nftList, setNftList] = useState([]);
+
+
     const [activeTab, setActiveTab] = useState(0);
     const [selectedSpecies, setSpecies] = useState(0);
     const [selectedGender, setGender] = useState(0);
@@ -55,6 +79,19 @@ const Marketplace = () => {
             description: 'When player use this item, grant extra 1 card draw from the deck. This item can be used once per match.'
         }])
     }, [])
+
+
+    useEffect(async () => {
+        if (publicKey) {
+            console.log("artwork effect")
+            let cProvider = await getProvider();
+            let sellOrders = await getListedNfts(cProvider);
+            if (sellOrders.length) {
+                setNftList(sellOrders)
+            }
+        }
+    }, [publicKey])
+
     return (<div className="container-fluid">
         <div className="row">
             <div className="col-12 pt-4 px-0">
@@ -107,7 +144,7 @@ const Marketplace = () => {
                                 <div className="col-lg-10 p-3">
                                     <div className="row">
                                         <div className="col-6 col-lg-8">
-                                            <h3 className="fw-bold">{nfts.length} NFTs</h3>
+                                            <h3 className="fw-bold">{nftList.length} NFTs</h3>
                                         </div>
                                         <div className="d-none p-0 d-lg-inline-block col-lg-1 align-baseline">
                                             Sort by :
@@ -123,19 +160,19 @@ const Marketplace = () => {
                                     </div>
                                     <div className="row mt-4">
                                         {
-                                            nfts.map((nft, ind) => <div className="col-12 col-md-4 col-lg-3" key={ind}><Link to={"/buy/" + nft.mint}>
+                                            nftList.map((nft, ind) => <div className="col-12 col-md-4 col-lg-3" key={ind}><Link to={"/buy/" + nft.mint}>
                                                 <div className="listing-box mb-3 p-3">
-                                                    <span className="title">{nft.name}</span>
-                                                    <img src={nft.img} className="my-2" alt={nft.name} />
-                                                    <span className="breed">Breed Count: {nft.breedCount}</span>
+                                                    <span className="title">{nft.data.name}</span>
+                                                    <img src={nft.data.image} className="my-2" alt={nft.data.name ? nft.data.name : ""} />
+                                                    <span className="breed">Breed Count: {"0"}</span>
                                                     <div className="row fw-bold">
                                                         <div className="col-6">
                                                             <img src={SolanaCoinImg} alt="SOL" className="currency" />
-                                                            {nft.solPrice} SOL
+                                                            {"0"} SOL
                                                         </div>
                                                         <div className="col-6">
                                                             <img src={KomoCoinImg} alt="KOMO" className="currency" />
-                                                            {nft.komoPrice} KOMO
+                                                            {nft.account.price.toString()} KOMO
                                                         </div>
                                                     </div>
                                                 </div>

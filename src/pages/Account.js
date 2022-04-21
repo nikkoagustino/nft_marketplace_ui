@@ -1,10 +1,118 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import CardDrawImg from "../assets/img/items/card-draw.png";
 import NftImg from "../assets/img/nft/9950.png";
+
+import axios from "axios";
+
+import * as anchor from "@project-serum/anchor";
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { getParsedNftAccountsByOwner } from "@nfteyez/sol-rayz";
+
+const opts = {
+    preflightCommitment: "processed"
+}
+
+
 const Account = () => {
+
+    const { connection } = useConnection();
+    const { publicKey, signTransaction } = useWallet();
+    const wallet = useWallet();
+
+    const [provider, setProvider] = useState(null);
+    const [program, setProgram] = useState(null);
+
+    const [nftData, setNftData] = useState([]);
+
     const [activeTab, setActiveTab] = useState(0);
     const [activeInventory, setActiveInventory] = useState(0);
+
+    async function getProvider() {
+        const provider = new anchor.Provider(
+            connection, wallet, opts.preflightCommitment,
+        );
+        return provider;
+    }
+
+    const initialize = async () => {
+        let cProvider = await getProvider();
+        console.log(cProvider.wallet.payer, "payer123456789")
+        setProvider(cProvider)
+        // let cProgram = new anchor.Program(idl, programId, cProvider);
+        // setProgram(cProgram);
+    }
+
+    useEffect(() => {
+        if (publicKey) {
+            initialize()
+            setNftTokenData(publicKey)
+        }
+    }, [publicKey])
+
+
+    const getAllNftData = async (walletPubKey) => {
+        try {
+            const nfts = await getParsedNftAccountsByOwner({
+                publicAddress: walletPubKey,
+                connection: connection,
+                serialization: true,
+            });
+
+            return nfts;
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    const setNftTokenData = async (walletPubKey) => {
+        try {
+            let nftsubData = [];
+            nftsubData = await getAllNftData(walletPubKey);
+            console.log(nftsubData, 'nftsubData');
+            let data = Object.keys(nftsubData).map((key) => nftsubData[key]);
+            let arr = [];
+
+            // var stakedNFTs = await getStakedNFTs();
+            // for (let i = 0; i < stakedNFTs.length; i++) {
+            //     data.push(stakedNFTs[i]);
+            // }
+
+            let n = data.length;
+            // let n = 10;
+            console.log(data, "over here")
+            for (let i = 0; i < n; i++) {
+                // if (nfts.indexOf(data[i].mint) === -1) {
+                // 	continue;
+                // }
+                let val = {};
+                try {
+                    val = await axios.get(data[i].data.uri);
+                } catch (err) {
+                    val = {
+                        data: {
+                            name: "",
+                            count: 0,
+                            image: "",
+                        }
+                    }
+                }
+                console.log(val, "val")
+                if (data[i].staked !== true) data[i].staked = false;
+                val.mint = data[i].mint;
+                val.staked = data[i].staked;
+                val.creator = data[i].data.creators[0].address;
+                val.creators = data[i].data.creators;
+                val.storeId = data[i].storeId;
+                arr.push(val);
+            }
+
+            console.log(arr, "arr11111")
+            setNftData(arr)
+        } catch (error) {
+            console.log(error);
+        }
+    }
 
     return (<div className="container-fluid">
         <div className="row border-bottom">
@@ -87,22 +195,26 @@ const Account = () => {
                                     <div className="row m-0">
                                         <div className="col-lg-12 p-3">
                                             <div className="row mt-4">
-                                                <div className="col-12 col-md-4 col-lg-3">
-                                                    <div className="listing-box mb-3 p-3">
-                                                        <span className="title">Komoverse #9950</span>
-                                                        <img src={NftImg} className="my-2" alt="Komoverse #9950" />
-                                                        <p>Breed Count: 0</p>
-                                                        <p>Attributes:</p>
-                                                        <ul>
-                                                            <li>Head: Chameleon Purle</li>
-                                                            <li>Body: Wizard</li>
-                                                            <li>Weapon: Desert Eagle</li>
-                                                            <li>Headgear: Magician Hat</li>
-                                                            <li>Background: Cloud Stroke Yellow</li>
-                                                        </ul>
-                                                        <Link to="/sell/1111111" className="btn btn-filter btn-primary">SELL</Link>
-                                                    </div>
-                                                </div>
+                                                {nftData.map((nft, i) => {
+                                                    return (
+                                                        <div key={i} className="col-12 col-md-4 col-lg-3">
+                                                            <div className="listing-box mb-3 p-3">
+                                                                <span className="title">{nft.data.name}</span>
+                                                                <img src={nft.data.image} className="my-2" alt="Komoverse #9950" />
+                                                                <p>Breed Count: 0</p>
+                                                                <p>Attributes:</p>
+                                                                <ul>
+                                                                    <li>Head: Chameleon Purle</li>
+                                                                    <li>Body: Wizard</li>
+                                                                    <li>Weapon: Desert Eagle</li>
+                                                                    <li>Headgear: Magician Hat</li>
+                                                                    <li>Background: Cloud Stroke Yellow</li>
+                                                                </ul>
+                                                                <Link to={`/sell/${nft.mint}`} className="btn btn-filter btn-primary">SELL</Link>
+                                                            </div>
+                                                        </div>
+                                                    )
+                                                })}
                                             </div>
                                         </div>
                                     </div>
