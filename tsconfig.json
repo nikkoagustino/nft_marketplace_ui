@@ -2,7 +2,12 @@
   "compilerOptions": {
     "baseUrl": "node_modules",
     "paths": {
-      "@solana/*": ["@solana/*"],
+      "@solana/*": [
+        "@solana/*"
+      ],
+      "crypto": [
+        "../../node_modules/crypto-js"
+      ]
     },
     "target": "es5",
     "lib": [
