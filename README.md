@@ -1,42 +1,70 @@
-# NFT Staking test with React App
+# Getting Started with Create React App
 
-## Needed requirement
+This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
-### Check the phantom extension was installed.
-
-### Copy idl file (nft_staking.json) to staking-ui/src/assets/ directory;
-
-
-## Follow Step by Step
+## Available Scripts
 
 In the project directory, you can run:
 
-### 1 => `yarn install`
+### `npm start`
 
-Install all needed packages
+Runs the app in the development mode.\
+Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
-### 2 => `Configration`
+The page will reload when you make changes.\
+You may also see any lint errors in the console.
 
-Initialize All configure data( Pool PublicKey, Liquidity Pool Mint PublicKey,\
-Funder PublicKey, Vault PublicKey, MintRewards PublicKey ).
+### `npm test`
 
-- All files are being created with random so if you want you can store file using "solana-keygen new -o file.json"
+Launches the test runner in the interactive watch mode.\
+See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
 
-Copy All Pubkeys to staking-ui/src/config.js file.
+### `npm run build`
 
-- poolPublicKey = Pool PublicKey
-- lpMintPublicKey = Liquidity Pool Mint PublicKey
-- funderPublicKey = Funder PublicKey
-- vaultPublicKey = Vault PublicKey
-- mintRewardsPublicKey = MintRewards PublicKey
+Builds the app for production to the `build` folder.\
+It correctly bundles React in production mode and optimizes the build for the best performance.
 
-### 3 => `yarn start`
+The build is minified and the filenames include the hashes.\
+Your app is ready to be deployed!
 
+See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
 
-- You can stake NFTs if you hit the "Stake" button on the nft bottom.
+### `npm run eject`
 
-- You can claim Rewards if you hit the "Claim Rewards" button on the top left.
+**Note: this is a one-way operation. Once you `eject`, you can't go back!**
 
-- You can see currently pending claim reward amount if you hit the "Pending Rewards" button on the top.
+If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
 
-- You can unstake NFTs if you clicks the "Unstake NFT" button on the top right.
+Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+
+You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+
+## Learn More
+
+You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+
+To learn React, check out the [React documentation](https://reactjs.org/).
+
+### Code Splitting
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+
+### Analyzing the Bundle Size
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+
+### Making a Progressive Web App
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+
+### Advanced Configuration
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+
+### Deployment
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+
+### `npm run build` fails to minify
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)

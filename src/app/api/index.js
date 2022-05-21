@@ -9,7 +9,6 @@ import {
 } from "@solana/spl-token";
 
 import { Connection, clusterApiUrl, LAMPORTS_PER_SOL, Keypair, PublicKey } from "@solana/web3.js";
-import { getParsedNftAccountsByOwner, isValidSolanaAddress, createConnectionConfig, } from "@nfteyez/sol-rayz";
 
 import { mintPubkey, marketplacePDA, adminPubkey, collectionPubkey } from './config'
 
@@ -40,12 +39,13 @@ const getProvider = () => {
 
 const getAllNftData = async (address) => {
     try {
-        const connect = createConnectionConfig(clusterApiUrl("devnet"));
-        const nfts = await getParsedNftAccountsByOwner({
-            publicAddress: address,
-            connection: connect,
-            serialization: true,
-        });
+        const connection = createConnection();
+        const allTokenAccounts = await connection.getParsedTokenAccountsByOwner(address, {
+            programId: TOKEN_PROGRAM_ID,
+        })
+
+        const nfts = allTokenAccounts.value.filter(nft => nft.account.data.parsed.info.tokenAmount.decimals === 0 &&
+            nft.account.data.parsed.info.tokenAmount.uiAmount == 1);
         return nfts;
     } catch (error) {
         console.log(error);
@@ -275,13 +275,13 @@ export const buy = async (provider, buyer, nftInfo, payType) => {
             buyer,
             payType,
         )
-    
+
         console.log("success")
         alert("Success")
         return true;
         // let buyerNftAccountAfterSell = await nftMint.getAccountInfo(buyerNftATA)
         // assert.equal(buyerNftAccountAfterSell.amount.toNumber(), 1)
-    
+
     } catch (error) {
         console.log(error, "Transaction error in buy.");
         alert("Failure")

@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import CardDrawImg from "../assets/img/items/card-draw.png";
-import NftImg from "../assets/img/nft/9950.png";
 
 import axios from "axios";
 
-import * as anchor from "@project-serum/anchor";
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
-import { getParsedNftAccountsByOwner } from "@nfteyez/sol-rayz";
 
 const opts = {
     preflightCommitment: "processed"
@@ -20,32 +18,13 @@ const Account = () => {
     const { publicKey, signTransaction } = useWallet();
     const wallet = useWallet();
 
-    const [provider, setProvider] = useState(null);
-    const [program, setProgram] = useState(null);
-
     const [nftData, setNftData] = useState([]);
 
     const [activeTab, setActiveTab] = useState(0);
     const [activeInventory, setActiveInventory] = useState(0);
 
-    async function getProvider() {
-        const provider = new anchor.Provider(
-            connection, wallet, opts.preflightCommitment,
-        );
-        return provider;
-    }
-
-    const initialize = async () => {
-        let cProvider = await getProvider();
-        console.log(cProvider.wallet.payer, "payer123456789")
-        setProvider(cProvider)
-        // let cProgram = new anchor.Program(idl, programId, cProvider);
-        // setProgram(cProgram);
-    }
-
     useEffect(() => {
         if (publicKey) {
-            initialize()
             setNftTokenData(publicKey)
         }
     }, [publicKey])
@@ -53,12 +32,12 @@ const Account = () => {
 
     const getAllNftData = async (walletPubKey) => {
         try {
-            const nfts = await getParsedNftAccountsByOwner({
-                publicAddress: walletPubKey,
-                connection: connection,
-                serialization: true,
-            });
+            const allTokenAccounts = await connection.getParsedTokenAccountsByOwner(walletPubKey, {
+                programId: TOKEN_PROGRAM_ID,
+            })
 
+            const nfts = allTokenAccounts.value.filter(nft => nft.account.data.parsed.info.tokenAmount.decimals === 0 &&
+                nft.account.data.parsed.info.tokenAmount.uiAmount == 1);
             return nfts;
         } catch (error) {
             console.log(error);
