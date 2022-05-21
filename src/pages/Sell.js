@@ -27,6 +27,7 @@ const Sell = () => {
         data: {}
     });
     const [tokenPrice, setTokenPrice] = useState(0);
+    const [solPrice, setSolPrice] = useState(0);
 
 
     async function getProvider() {
@@ -66,18 +67,25 @@ const Sell = () => {
     }
 
     const handleSell = async () => {
-        console.log(tokenPrice)
+        console.log(tokenPrice, solPrice)
+
         if (tokenPrice <= 0) {
             alert("please enter the token price correctly.")
             return;
         }
-        
+
+        if (solPrice <= 0) {
+            alert("please enter the sol price correctly.")
+            return;
+        }
+
+
         let cProvider = await getProvider();
-        
+
         if (cProvider) {
             console.log("sellNFT")
-            let result = await sell(cProvider, publicKey, nftInfo, tokenPrice);
-            if(result) {
+            let result = await sell(cProvider, publicKey, nftInfo, solPrice, tokenPrice);
+            if (result) {
                 navigate("/marketplace");
             }
         }
@@ -103,7 +111,12 @@ const Sell = () => {
                     <li>Background: Cloud Stroke Yellow</li>
                 </ul>
                 <span class="d-block">Listing Price (SOL)</span>
-                <input type="number" class="form-control" />
+                <input
+                    type="number"
+                    class="form-control"
+                    value={solPrice}
+                    onChange={e => setSolPrice(e.target.value)}
+                />
                 <span class="d-block mt-3">Listing Price (KOMO)</span>
                 <input
                     type="number"

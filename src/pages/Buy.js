@@ -43,11 +43,13 @@ const Buy = () => {
         }
     }, [publicKey])
 
-    const handleBuy = async () => {
+    const handleBuy = async (type) => {
+
+        console.log(type, "handleBuy")
         let cProvider = await getProvider();
         if (cProvider) {
             // let nftDt = await nftData.find(n => n.mint === selectedNFT);
-            let result = await buy(cProvider, publicKey, nftInfo);
+            let result = await buy(cProvider, publicKey, nftInfo, type);
             if(result) {
                 navigate("/account")
             }
@@ -76,13 +78,13 @@ const Buy = () => {
                 <div class="row">
                     <div class="col-6">
                         <img src="assets/img/solana-coin.webp" class="buy-currency" alt="" />
-                        <span class="ms-2 fs-5">0 SOL</span>
-                        <button class="mt-3 btn btn-filter btn-lg btn-primary">BUY NOW (SOL)</button>
+                        <span class="ms-2 fs-5">{nftInfo.account.solPrice ? nftInfo.account.solPrice.toString() / (10 ** 9) : 0} SOL</span>
+                        <button class="mt-3 btn btn-filter btn-lg btn-primary" onClick={() => handleBuy(1)}>BUY NOW (SOL)</button>
                     </div>
                     <div class="col-6">
                         <img src="assets/img/komo-coin.webp" class="buy-currency" alt="" />
-                        <span class="ms-2 fs-5">{nftInfo.account.price ? nftInfo.account.price.toString() : 0} KOMO</span>
-                        <button class="mt-3 btn btn-filter btn-lg btn-primary" onClick={handleBuy}>BUY NOW (KOMO)</button>
+                        <span class="ms-2 fs-5">{nftInfo.account.tokenPrice ? nftInfo.account.tokenPrice.toString() / (10 ** 9) : 0} KOMO</span>
+                        <button class="mt-3 btn btn-filter btn-lg btn-primary" onClick={() => handleBuy(2)}>BUY NOW (KOMO)</button>
                     </div>
                 </div>
             </div>

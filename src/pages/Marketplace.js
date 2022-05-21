@@ -168,11 +168,11 @@ const Marketplace = () => {
                                                     <div className="row fw-bold">
                                                         <div className="col-6">
                                                             <img src={SolanaCoinImg} alt="SOL" className="currency" />
-                                                            {"0"} SOL
+                                                            {nft.account.solPrice.toString() / (10 ** 9)} SOL
                                                         </div>
                                                         <div className="col-6">
                                                             <img src={KomoCoinImg} alt="KOMO" className="currency" />
-                                                            {nft.account.price.toString()} KOMO
+                                                            {nft.account.tokenPrice.toString() / (10 ** 9)} KOMO
                                                         </div>
                                                     </div>
                                                 </div>

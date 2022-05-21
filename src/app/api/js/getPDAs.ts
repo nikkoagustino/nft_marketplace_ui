@@ -29,11 +29,11 @@ export const getEscrowPDA = async (marketplacePDA: PublicKey, marketplaceMint: P
     ))[0]
 }
 
-export const getCollectionPDA = async (marketplacePDA: PublicKey, symbol: string): Promise<PublicKey> => {
+export const getCollectionPDA = async (marketplacePDA: PublicKey, symbol: PublicKey): Promise<PublicKey> => {
     return (await anchor.web3.PublicKey.findProgramAddress(
         [
             Buffer.from('MARKETPLACE'),
-            Buffer.from(symbol),
+            symbol.toBuffer(),
             marketplacePDA.toBuffer(),
         ],
         MARKETPLACE_PROGRAM_ID,
@@ -47,12 +47,13 @@ export const getNftVaultPDA = async (nftMint: PublicKey): Promise<PublicKey> => 
     ))[0]
 }
 
-export const getSellOrderPDA = async (sellerTokenAccount: PublicKey, price: anchor.BN): Promise<PublicKey> => {
+export const getSellOrderPDA = async (sellerTokenAccount: PublicKey, solPrice: anchor.BN, tokenPrice: anchor.BN): Promise<PublicKey> => {
     return (await anchor.web3.PublicKey.findProgramAddress(
         [
             Buffer.from('MARKETPLACE'),
             sellerTokenAccount.toBuffer(),
-            Buffer.from(price.toString())
+            Buffer.from(solPrice.toString()),
+            Buffer.from(tokenPrice.toString())
         ],
         MARKETPLACE_PROGRAM_ID,
     ))[0]
@@ -65,16 +66,29 @@ export const _getAssociatedTokenAddress = async (addr: PublicKey, mint: PublicKe
     )
 }
 
-export const getBuyOfferPDA = async (marketplacePDA: PublicKey, buyer: PublicKey, nftMint: PublicKey, price: anchor.BN): Promise<PublicKey> => {
+export const getBuyOfferPDA = async (marketplacePDA: PublicKey, buyer: PublicKey, nftMint: PublicKey, solPrice: anchor.BN, tokenPrice: anchor.BN): Promise<PublicKey> => {
     return (await anchor.web3.PublicKey.findProgramAddress(
         [
             Buffer.from("MARKETPLACE"),
             marketplacePDA.toBuffer(),
             buyer.toBuffer(),
             nftMint.toBuffer(),
-            Buffer.from(price.toString()),
+            Buffer.from(solPrice.toString()),
+            Buffer.from(tokenPrice.toString()),
             Buffer.from("ESCROW"),
         ],
         MARKETPLACE_PROGRAM_ID,
     ))[0];
+}
+
+export const getStorePDA = async (marketplacePDA: PublicKey): Promise<[PublicKey, number]> => {
+   
+    return (await anchor.web3.PublicKey.findProgramAddress(
+        [
+            Buffer.from("MARKETPLACE"),
+            marketplacePDA.toBuffer(),
+            Buffer.from("store"),
+        ],
+        MARKETPLACE_PROGRAM_ID,
+    ));
 }

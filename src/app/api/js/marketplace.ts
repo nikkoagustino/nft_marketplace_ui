@@ -83,7 +83,7 @@ export class Marketplace {
         authority: Keypair,
         name: string,
         required_metadata_signer: PublicKey,
-        collection_symbol: string,
+        collection_symbol: PublicKey,
         ignore_creators: boolean,
         fee?: number,
     ): Promise<string> {

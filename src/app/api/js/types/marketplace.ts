@@ -177,7 +177,7 @@ export type Marketplace = {
       "args": [
         {
           "name": "symbol",
-          "type": "string"
+          "type": "publicKey"
         },
         {
           "name": "requiredVerifier",
@@ -224,7 +224,7 @@ export type Marketplace = {
         {
           "name": "optionalSymbol",
           "type": {
-            "option": "string"
+            "option": "publicKey"
           }
         },
         {
@@ -302,7 +302,11 @@ export type Marketplace = {
       ],
       "args": [
         {
-          "name": "price",
+          "name": "solPrice",
+          "type": "u64"
+        },
+        {
+          "name": "tokenPrice",
           "type": "u64"
         },
         {
@@ -416,6 +420,11 @@ export type Marketplace = {
           "isSigner": true
         },
         {
+          "name": "seller",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "buyerNftTokenAccount",
           "isMut": true,
           "isSigner": false
@@ -432,6 +441,11 @@ export type Marketplace = {
         },
         {
           "name": "marketplaceDestAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "marketplaceAuthority",
           "isMut": true,
           "isSigner": false
         },
@@ -465,6 +479,10 @@ export type Marketplace = {
         {
           "name": "askQuantity",
           "type": "u64"
+        },
+        {
+          "name": "payType",
+          "type": "u8"
         }
       ]
     },
@@ -498,6 +516,11 @@ export type Marketplace = {
         },
         {
           "name": "escrow",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "store",
           "isMut": true,
           "isSigner": false
         },
@@ -539,8 +562,16 @@ export type Marketplace = {
       ],
       "args": [
         {
-          "name": "priceProposition",
+          "name": "solPriceProposition",
           "type": "u64"
+        },
+        {
+          "name": "tokenPriceProposition",
+          "type": "u64"
+        },
+        {
+          "name": "storeNonce",
+          "type": "u8"
         }
       ]
     },
@@ -568,6 +599,11 @@ export type Marketplace = {
           "isSigner": false
         },
         {
+          "name": "store",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "buyOffer",
           "isMut": true,
           "isSigner": false
@@ -588,15 +624,30 @@ export type Marketplace = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "storeNonce",
+          "type": "u8"
+        }
+      ]
     },
     {
       "name": "executeOffer",
       "accounts": [
         {
-          "name": "seller",
-          "isMut": false,
+          "name": "authority",
+          "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "sellerNftTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "sellOrder",
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "buyer",
@@ -614,12 +665,22 @@ export type Marketplace = {
           "isSigner": false
         },
         {
+          "name": "marketplaceAuthority",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "marketplaceDestAccount",
           "isMut": true,
           "isSigner": false
         },
         {
           "name": "escrow",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "store",
           "isMut": true,
           "isSigner": false
         },
@@ -634,13 +695,13 @@ export type Marketplace = {
           "isSigner": false
         },
         {
-          "name": "sellerNftAccount",
-          "isMut": true,
+          "name": "metadata",
+          "isMut": false,
           "isSigner": false
         },
         {
-          "name": "metadata",
-          "isMut": false,
+          "name": "vault",
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -664,7 +725,12 @@ export type Marketplace = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "storeNonce",
+          "type": "u8"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -702,7 +768,11 @@ export type Marketplace = {
             "type": "publicKey"
           },
           {
-            "name": "price",
+            "name": "solPrice",
+            "type": "u64"
+          },
+          {
+            "name": "tokenPrice",
             "type": "u64"
           },
           {
@@ -735,7 +805,7 @@ export type Marketplace = {
           },
           {
             "name": "symbol",
-            "type": "string"
+            "type": "publicKey"
           },
           {
             "name": "requiredVerifier",
@@ -768,7 +838,11 @@ export type Marketplace = {
             "type": "publicKey"
           },
           {
-            "name": "proposedPrice",
+            "name": "proposedSolPrice",
+            "type": "u64"
+          },
+          {
+            "name": "proposedTokenPrice",
             "type": "u64"
           },
           {
@@ -783,41 +857,35 @@ export type Marketplace = {
       }
     }
   ],
-  "errors": [
+  "types": [
     {
-      "code": 6000,
-      "name": "ErrFeeShouldLowerOrEqualThan10000",
-      "msg": "Fee should be <= 10000"
-    },
-    {
-      "code": 6001,
-      "name": "ErrTryingToUnlistMoreThanOwned",
-      "msg": "Trying to unlist more than owned"
-    },
-    {
-      "code": 6002,
-      "name": "ErrCouldNotBuyEnoughItem",
-      "msg": "Could not buy the required quantity of items"
-    },
-    {
-      "code": 6003,
-      "name": "ErrMetaDataMintDoesNotMatchItemMint",
-      "msg": "metadata mint does not match item mint"
-    },
-    {
-      "code": 6004,
-      "name": "ErrNftNotPartOfCollection",
-      "msg": "nft not part of collection"
-    },
-    {
-      "code": 6005,
-      "name": "DerivedKeyInvalid",
-      "msg": "Derived key invalid"
-    },
-    {
-      "code": 6006,
-      "name": "NotInitialized",
-      "msg": "AccountNotInitialized"
+      "name": "ErrorCode",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "ErrFeeShouldLowerOrEqualThan10000"
+          },
+          {
+            "name": "ErrTryingToUnlistMoreThanOwned"
+          },
+          {
+            "name": "ErrCouldNotBuyEnoughItem"
+          },
+          {
+            "name": "ErrMetaDataMintDoesNotMatchItemMint"
+          },
+          {
+            "name": "ErrNftNotPartOfCollection"
+          },
+          {
+            "name": "DerivedKeyInvalid"
+          },
+          {
+            "name": "NotInitialized"
+          }
+        ]
+      }
     }
   ]
 };
@@ -1001,7 +1069,7 @@ export const IDL: Marketplace = {
       "args": [
         {
           "name": "symbol",
-          "type": "string"
+          "type": "publicKey"
         },
         {
           "name": "requiredVerifier",
@@ -1048,7 +1116,7 @@ export const IDL: Marketplace = {
         {
           "name": "optionalSymbol",
           "type": {
-            "option": "string"
+            "option": "publicKey"
           }
         },
         {
@@ -1126,7 +1194,11 @@ export const IDL: Marketplace = {
       ],
       "args": [
         {
-          "name": "price",
+          "name": "solPrice",
+          "type": "u64"
+        },
+        {
+          "name": "tokenPrice",
           "type": "u64"
         },
         {
@@ -1240,6 +1312,11 @@ export const IDL: Marketplace = {
           "isSigner": true
         },
         {
+          "name": "seller",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "buyerNftTokenAccount",
           "isMut": true,
           "isSigner": false
@@ -1256,6 +1333,11 @@ export const IDL: Marketplace = {
         },
         {
           "name": "marketplaceDestAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "marketplaceAuthority",
           "isMut": true,
           "isSigner": false
         },
@@ -1289,6 +1371,10 @@ export const IDL: Marketplace = {
         {
           "name": "askQuantity",
           "type": "u64"
+        },
+        {
+          "name": "payType",
+          "type": "u8"
         }
       ]
     },
@@ -1322,6 +1408,11 @@ export const IDL: Marketplace = {
         },
         {
           "name": "escrow",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "store",
           "isMut": true,
           "isSigner": false
         },
@@ -1363,8 +1454,16 @@ export const IDL: Marketplace = {
       ],
       "args": [
         {
-          "name": "priceProposition",
+          "name": "solPriceProposition",
           "type": "u64"
+        },
+        {
+          "name": "tokenPriceProposition",
+          "type": "u64"
+        },
+        {
+          "name": "storeNonce",
+          "type": "u8"
         }
       ]
     },
@@ -1392,6 +1491,11 @@ export const IDL: Marketplace = {
           "isSigner": false
         },
         {
+          "name": "store",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "buyOffer",
           "isMut": true,
           "isSigner": false
@@ -1412,15 +1516,30 @@ export const IDL: Marketplace = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "storeNonce",
+          "type": "u8"
+        }
+      ]
     },
     {
       "name": "executeOffer",
       "accounts": [
         {
-          "name": "seller",
-          "isMut": false,
+          "name": "authority",
+          "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "sellerNftTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "sellOrder",
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "buyer",
@@ -1438,12 +1557,22 @@ export const IDL: Marketplace = {
           "isSigner": false
         },
         {
+          "name": "marketplaceAuthority",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "marketplaceDestAccount",
           "isMut": true,
           "isSigner": false
         },
         {
           "name": "escrow",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "store",
           "isMut": true,
           "isSigner": false
         },
@@ -1458,13 +1587,13 @@ export const IDL: Marketplace = {
           "isSigner": false
         },
         {
-          "name": "sellerNftAccount",
-          "isMut": true,
+          "name": "metadata",
+          "isMut": false,
           "isSigner": false
         },
         {
-          "name": "metadata",
-          "isMut": false,
+          "name": "vault",
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -1488,7 +1617,12 @@ export const IDL: Marketplace = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "storeNonce",
+          "type": "u8"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -1526,7 +1660,11 @@ export const IDL: Marketplace = {
             "type": "publicKey"
           },
           {
-            "name": "price",
+            "name": "solPrice",
+            "type": "u64"
+          },
+          {
+            "name": "tokenPrice",
             "type": "u64"
           },
           {
@@ -1559,7 +1697,7 @@ export const IDL: Marketplace = {
           },
           {
             "name": "symbol",
-            "type": "string"
+            "type": "publicKey"
           },
           {
             "name": "requiredVerifier",
@@ -1592,7 +1730,11 @@ export const IDL: Marketplace = {
             "type": "publicKey"
           },
           {
-            "name": "proposedPrice",
+            "name": "proposedSolPrice",
+            "type": "u64"
+          },
+          {
+            "name": "proposedTokenPrice",
             "type": "u64"
           },
           {
@@ -1607,41 +1749,35 @@ export const IDL: Marketplace = {
       }
     }
   ],
-  "errors": [
+  "types": [
     {
-      "code": 6000,
-      "name": "ErrFeeShouldLowerOrEqualThan10000",
-      "msg": "Fee should be <= 10000"
-    },
-    {
-      "code": 6001,
-      "name": "ErrTryingToUnlistMoreThanOwned",
-      "msg": "Trying to unlist more than owned"
-    },
-    {
-      "code": 6002,
-      "name": "ErrCouldNotBuyEnoughItem",
-      "msg": "Could not buy the required quantity of items"
-    },
-    {
-      "code": 6003,
-      "name": "ErrMetaDataMintDoesNotMatchItemMint",
-      "msg": "metadata mint does not match item mint"
-    },
-    {
-      "code": 6004,
-      "name": "ErrNftNotPartOfCollection",
-      "msg": "nft not part of collection"
-    },
-    {
-      "code": 6005,
-      "name": "DerivedKeyInvalid",
-      "msg": "Derived key invalid"
-    },
-    {
-      "code": 6006,
-      "name": "NotInitialized",
-      "msg": "AccountNotInitialized"
+      "name": "ErrorCode",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "ErrFeeShouldLowerOrEqualThan10000"
+          },
+          {
+            "name": "ErrTryingToUnlistMoreThanOwned"
+          },
+          {
+            "name": "ErrCouldNotBuyEnoughItem"
+          },
+          {
+            "name": "ErrMetaDataMintDoesNotMatchItemMint"
+          },
+          {
+            "name": "ErrNftNotPartOfCollection"
+          },
+          {
+            "name": "DerivedKeyInvalid"
+          },
+          {
+            "name": "NotInitialized"
+          }
+        ]
+      }
     }
   ]
 };

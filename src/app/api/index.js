@@ -11,7 +11,7 @@ import {
 import { Connection, clusterApiUrl, LAMPORTS_PER_SOL, Keypair, PublicKey } from "@solana/web3.js";
 import { getParsedNftAccountsByOwner, isValidSolanaAddress, createConnectionConfig, } from "@nfteyez/sol-rayz";
 
-import { mintPubkey, marketplacePDA, adminPubkey } from './config'
+import { mintPubkey, marketplacePDA, adminPubkey, collectionPubkey } from './config'
 
 import { Marketplace } from './js/marketplace';
 import { Collection } from "./js/collection";
@@ -118,21 +118,25 @@ export const FilterWalletNfts = async (address) => {
 
 }
 
-export const sell = async (provider, seller, nftDt, price) => {
+export const sell = async (provider, seller, nftDt, solPrice, tokenPrice) => {
 
     let sellerTokenAccount = await getAssociatedTokenAddress(mintPubkey, seller);
 
     let sellerAccountInfo = await provider.connection.getAccountInfo(sellerTokenAccount)
     if (sellerAccountInfo === null) {
-        alert("Your fee token account is not exist.");
-        return;
+
+        let program = new Program(idl, MARKETPLACE_PROGRAM_ID, provider);
+        let tx = new web3.Transaction();
+        tx.add(createAssociatedTokenAccountInstruction(seller, sellerTokenAccount, seller, mintPubkey))
+
+        await program.provider.send(tx, []);
     }
 
     let mint = new PublicKey(nftDt.mint);
     let sellerNftAssociatedTokenAccount = await getAssociatedTokenAddress(mint, seller)
 
     let marketplace = new Marketplace(provider, marketplacePDA);
-    let collectionPDA = await getCollectionPDA(marketplace.marketplacePDA, "Willie")
+    let collectionPDA = await getCollectionPDA(marketplace.marketplacePDA, collectionPubkey)
     let collection = new Collection(provider, marketplace.marketplacePDA, collectionPDA)
 
     try {
@@ -140,7 +144,8 @@ export const sell = async (provider, seller, nftDt, price) => {
             mint,
             sellerNftAssociatedTokenAccount,
             sellerTokenAccount,
-            new BN(price),
+            new BN(solPrice * (10 ** 9)),
+            new BN(tokenPrice * (10 ** 9)),
             new BN(1),
             seller
         )
@@ -214,13 +219,17 @@ export const getNFTInfoBySellOrder = async (provider, sellOrderPDA) => {
     return obj;
 }
 
-export const buy = async (provider, buyer, nftInfo) => {
+export const buy = async (provider, buyer, nftInfo, payType) => {
 
     let buyerTokenATA = await getAssociatedTokenAddress(mintPubkey, buyer)
     let buyerTokenInfo = await provider.connection.getAccountInfo(buyerTokenATA);
     if (buyerTokenInfo === null) {
-        alert("Your fee token account is not exist.");
-        return;
+
+        let program = new Program(idl, MARKETPLACE_PROGRAM_ID, provider);
+        let tx = new web3.Transaction();
+        tx.add(createAssociatedTokenAccountInstruction(buyer, buyerTokenATA, buyer, mintPubkey))
+
+        await program.provider.send(tx, []);
     }
 
     let nftMint = new PublicKey(nftInfo.account.mint);
@@ -238,21 +247,33 @@ export const buy = async (provider, buyer, nftInfo) => {
 
     let marketplace = new Marketplace(provider, marketplacePDA);
 
-    let collectionPDA = await getCollectionPDA(marketplace.marketplacePDA, "Willie")
+    let collectionPDA = await getCollectionPDA(marketplace.marketplacePDA, collectionPubkey)
     let collection = new Collection(provider, marketplace.marketplacePDA, collectionPDA)
 
-    let sellerNftAssociatedTokenAccount = await getAssociatedTokenAddress(nftMint, nftInfo.account.authority)
+    let seller = new PublicKey(nftInfo.account.authority);
+    let sellerNftAssociatedTokenAccount = await getAssociatedTokenAddress(nftMint, seller)
+
+    let sellerNfInfo = await provider.connection.getAccountInfo(sellerNftAssociatedTokenAccount);
+    if (sellerNfInfo === null) {
+        let program = new Program(idl, MARKETPLACE_PROGRAM_ID, provider);
+        let tx = new web3.Transaction();
+        tx.add(createAssociatedTokenAccountInstruction(buyer, sellerNftAssociatedTokenAccount, seller, nftMint))
+
+        await program.provider.send(tx, [])
+    }
 
     try {
         await collection.buy(
             nftMint,
+            seller,
             [
-                await getSellOrderPDA(sellerNftAssociatedTokenAccount, new BN(nftInfo.account.price)),
+                await getSellOrderPDA(sellerNftAssociatedTokenAccount, new BN(nftInfo.account.solPrice), new BN(nftInfo.account.tokenPrice)),
             ],
             buyerNftATA,
             buyerTokenATA,
             new BN(1),
             buyer,
+            payType,
         )
     
         console.log("success")
@@ -268,219 +289,4 @@ export const buy = async (provider, buyer, nftInfo) => {
     }
 }
 
-export const removeSellOrder = async (provider, seller, nftDt) => {
-
-    // let mint = new PublicKey(nftDt.account.mint);
-    // let nftMint = new Token(provider.connection, mint, TOKEN_PROGRAM_ID, provider.wallet.payer)
-    // let sellerNftAssociatedTokenAccount = (await nftMint.getOrCreateAssociatedAccountInfo(seller)).address
-
-    // let marketplace = new Marketplace(provider, marketplacePDA);
-
-    // let filterSellOrder = await marketplace.filterSellOrderByMint(nftDt.account.mint.toBase58());
-    // let price = filterSellOrder[0].account.price;
-
-    // let sellOrderPDA = await getSellOrderPDA(sellerNftAssociatedTokenAccount, new BN(price));
-
-    // let collectionPDA = await getCollectionPDA(marketplace.marketplacePDA, "Willie")
-    // let collection = new Collection(provider, marketplace.marketplacePDA, collectionPDA);
-
-    // try {
-    //     await collection.removeSellOrder(
-    //         nftMint.publicKey,
-    //         sellerNftAssociatedTokenAccount,
-    //         sellOrderPDA,
-    //         new BN(1),
-    //         seller
-    //     )
-    //     alert("Success.");
-    // } catch (error) {
-    //     console.log(error, "Failure.");
-    //     alert("Failure.");
-    // }
-}
-
-export const createNftOffer = async (provider, buyer, nftInfo, price) => {
-
-    // let admin = Keypair.fromSecretKey(new Uint8Array(adminWallet));
-
-    // const marketplaceMint = new splToken.Token(
-    //     provider.connection,
-    //     mintPubkey,
-    //     splToken.TOKEN_PROGRAM_ID,
-    //     provider.wallet.payer
-    // );
-
-    // let buyerTokenAccount = await Token.getAssociatedTokenAddress(splToken.ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, marketplaceMint.publicKey, buyer)
-    // const buyerTokenInfo = await provider.connection.getAccountInfo(buyerTokenAccount);
-    // if (buyerTokenInfo === null) {
-    //     alert("Your fee token account is not exist.");
-    //     return;
-    // }
-
-    // console.log(nftInfo, "createNftOffer ======= nftInfo")
-
-    // let mint = new PublicKey(nftInfo.account.mint);
-    // let nftMint = new Token(provider.connection, mint, TOKEN_PROGRAM_ID, admin)
-    // let buyerNftTokenAccount = await nftMint.createAssociatedTokenAccount(new PublicKey(buyer))
-    // // let buyerNftTokenAccount = (await nftMint.getOrCreateAssociatedAccountInfo(new PublicKey(buyer))).address
-
-    // console.log(buyerNftTokenAccount.toBase58(), "createNftOffer ======= buyerNftTokenAccount")
-
-    // let marketplace = new Marketplace(provider, marketplacePDA);
-    // let collectionPDA = await getCollectionPDA(marketplace.marketplacePDA, "Willie")
-    // let collection = new Collection(provider, marketplace.marketplacePDA, collectionPDA);
-
-    // try {
-    //     await collection.createNftOffer(
-    //         nftMint.publicKey,
-    //         buyerNftTokenAccount,
-    //         buyerTokenAccount,
-    //         buyer,
-    //         new BN(price)
-    //     )
-    //     alert("Success.");
-    // } catch (error) {
-    //     console.log(error, "Failure.");
-    //     alert("Failure.");
-    // }
-}
-
-export const getAllOffers = async (provider, seller) => {
-    // let marketplace = new Marketplace(provider, marketplacePDA);
-    // let buyOffers = await marketplace.getAllOffers();
-
-    // console.log(buyOffers, "getAllOffers === ");
-
-    // let datas = [];
-
-    // for (let i = 0; i < buyOffers.length; i++) {
-    //     const offer = buyOffers[i];
-    //     if (marketplacePDA.toBase58() === offer.account.marketplace.toBase58()) {
-
-    //         let obj = {};
-
-    //         let metaPubkey = await getMetadata(new PublicKey(offer.account.mint));
-    //         let metadataObj = await provider.connection.getAccountInfo(metaPubkey);
-
-    //         let decoded = await decodeMetadata(Buffer.from(metadataObj.data));
-    //         try {
-    //             obj = await axios.get(decoded.data.uri);
-    //         } catch (error) {
-    //             console.log("Error")
-    //             console.log(error, "Getting Nft Metadatas.")
-    //         }
-    //         obj.mint = offer.publicKey.toBase58();
-    //         obj.uri = decoded.data.uri;
-    //         obj.account = offer.account;
-
-    //         let filterSellOrder = await marketplace.filterSellOrderByMint(offer.account.mint.toBase58());
-    //         obj.account.seller = filterSellOrder[0].account.authority;
-
-    //         if(obj.account.seller.toBase58() === seller.toBase58()) {
-    //             datas.push(obj);
-    //         }
-    //     }
-    // }
-    // console.log(datas, "getAllOffers")
-
-    // return datas;
-}
-
-export const excuteNftOffer = async (provider, buyer, nftInfo) => {
-
-    // let admin = Keypair.fromSecretKey(new Uint8Array(adminWallet));
-
-    // console.log(nftInfo, "111")
-
-    // let mint = new PublicKey(nftInfo.account.mint);
-    // console.log("444")
-
-    // let nftMint = new Token(provider.connection, mint, TOKEN_PROGRAM_ID, admin)
-    // console.log(buyer, "444")
-
-    // // let buyerNftTokenAccount = (await nftMint.getOrCreateAssociatedAccountInfo(new PublicKey(buyer))).address;
-    // let buyerNftTokenAccount = await nftMint.createAssociatedTokenAccount(new PublicKey(buyer))
-
-    // console.log(buyerNftTokenAccount, "buyerNftTokenAccount")
-    // let marketplaceMint = new Token(
-    //     provider.connection,
-    //     mintPubkey,
-    //     TOKEN_PROGRAM_ID,
-    //     admin
-    // );
-    // console.log(marketplaceMint, "2222")
-
-
-    // let adminTokenAccount = await Token.getAssociatedTokenAddress(splToken.ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, marketplaceMint.publicKey, adminPubkey);
-
-    // console.log(adminTokenAccount.toBase58(), "3333")
-
-    // let adminAccountInfo = await provider.connection.getAccountInfo(adminTokenAccount)
-
-    // console.log(adminAccountInfo, "7777")
-
-    // if (adminAccountInfo === null) {
-    //     await marketplaceMint.createAssociatedTokenAccount(
-    //         adminPubkey,
-    //     );
-    // } else {
-    //     console.log("already created.")
-    // }
-
-    // console.log("3333")
-
-    // let seller = nftInfo.account.seller;
-
-    // let sellerTokenAccount = await Token.getAssociatedTokenAddress(splToken.ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, mintPubkey, seller);
-
-    // console.log(seller.toBase58(), "seller")
-    // console.log(sellerTokenAccount.toBase58(), "sellerTokenAccount")
-
-    // let sellerNftAssociatedTokenAccount = (await nftMint.getOrCreateAssociatedAccountInfo(seller)).address
-
-
-    // console.log(sellerNftAssociatedTokenAccount.toBase58, "sellerNftAssociatedTokenAccount");
-
-    // let marketplace = new Marketplace(provider, marketplacePDA);
-    // let collectionPDA = await getCollectionPDA(marketplace.marketplacePDA, "Willie")
-    // let collection = new Collection(provider, marketplace.marketplacePDA, collectionPDA);
-
-    // console.log(new BN(nftInfo.account.proposedPrice).toBase58())
-
-    // try {
-    //     await collection.excuteNftOffer(
-    //         nftMint.publicKey,
-    //         buyerNftTokenAccount,
-    //         adminTokenAccount,
-    //         sellerTokenAccount,
-    //         sellerNftAssociatedTokenAccount,
-    //         buyer,
-    //         seller,
-    //         new BN(nftInfo.account.proposedPrice)
-    //     )
-    //     alert("Success.");
-    // } catch (error) {
-    //     console.log(error, "Failure.");
-    //     alert("Failure.");
-    // }
-}
-
-export const removeNftOffer = async (provider) => {
-    // let marketplace = new Marketplace(provider, marketplacePDA);
-    // let collectionPDA = await getCollectionPDA(marketplace.marketplacePDA, "Willie")
-    // let collection = new Collection(provider, marketplace.marketplacePDA, collectionPDA);
-
-    // try {
-    //     await collection.removeNftOffer(
-    //         nftMint.publicKey,
-    //         buyerTokenAccount,
-    //         buyer,
-    //         new BN(nftDt.account.price)
-    //     )
-    //     alert("Success.");
-    // } catch (error) {
-    //     console.log(error, "Failure.");
-    //     alert("Failure.");
-    // }
-}
 

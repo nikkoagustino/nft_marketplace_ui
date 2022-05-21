@@ -3,7 +3,7 @@ import { Marketplace as MarketplaceDefinition, IDL } from './types/marketplace'
 import { MARKETPLACE_PROGRAM_ID } from './constant'
 import { Keypair, PublicKey, TransactionInstruction } from '@solana/web3.js'
 import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token'
-import { _getAssociatedTokenAddress, getNftVaultPDA, getSellOrderPDA, getEscrowPDA, getBuyOfferPDA } from './getPDAs'
+import { _getAssociatedTokenAddress, getNftVaultPDA, getSellOrderPDA, getEscrowPDA, getBuyOfferPDA, getStorePDA } from './getPDAs'
 import { getMetadata } from './metaplex'
 import { programs } from '@metaplex/js'
 import idl from './types/marketplace.json'
@@ -35,15 +35,16 @@ export class Collection {
         nftMint: PublicKey,
         sellerNftAccount: PublicKey,
         sellerDestination: PublicKey,
-        price: anchor.BN,
+        solPrice: anchor.BN,
+        tokenPrice: anchor.BN,
         amount: anchor.BN,
         seller: PublicKey,
     ): Promise<TransactionInstruction> {
         let programNftVaultPDA = await getNftVaultPDA(nftMint)
-        let sellOrderPDA = await getSellOrderPDA(sellerNftAccount, price)
+        let sellOrderPDA = await getSellOrderPDA(sellerNftAccount, solPrice, tokenPrice);
 
         let metadataPDA = await Metadata.getPDA(nftMint)
-        return await this.program.methods.createSellOrder(price, amount, sellerDestination).accounts(
+        return await this.program.methods.createSellOrder(solPrice, tokenPrice, amount, sellerDestination).accounts(
             {
                 payer: seller,
                 sellerNftTokenAccount: sellerNftAccount,
@@ -64,13 +65,14 @@ export class Collection {
         nftMint: PublicKey,
         sellerNftAccount: PublicKey,
         sellerDestination: PublicKey,
-        price: anchor.BN,
+        solPrice: anchor.BN,
+        tokenPrice: anchor.BN,
         amount: anchor.BN,
         seller: PublicKey
     ): Promise<string> {
         let ix = await this.sellAssetInstruction(
             nftMint, sellerNftAccount, sellerDestination,
-            price, amount, seller
+            solPrice, tokenPrice, amount, seller
         )
         return this._sendInstruction(ix, [])
     }
@@ -149,11 +151,13 @@ export class Collection {
 
     async buyInstruction(
         nftMint: PublicKey,
+        seller: PublicKey,
         sellOrdersPDA: PublicKey[],
         buyerNftAccount: PublicKey,
         buyerPayingAccount: PublicKey,
         wanted_quantity: anchor.BN,
         buyer: PublicKey,
+        payType: number
     ): Promise<TransactionInstruction> {
         let programNftVaultPDA = await getNftVaultPDA(nftMint)
         let marketplaceAccount = await this.program.account.marketplace.fetch(this.marketplacePDA)
@@ -176,6 +180,10 @@ export class Collection {
                 let creatorATA = await _getAssociatedTokenAddress(creatorAddress, marketplaceAccount.mint)
 
                 creatorsAccounts.push(
+                    { pubkey: creatorAddress, isWritable: true, isSigner: false },
+                )
+
+                creatorsAccounts.push(
                     { pubkey: creatorATA, isWritable: true, isSigner: false },
                 )
             }
@@ -188,12 +196,14 @@ export class Collection {
             sellOrders.push({ pubkey: so.destination, isWritable: true, isSigner: false })
         }
 
-        return await this.program.methods.buy(wanted_quantity).accounts({
+        return await this.program.methods.buy(wanted_quantity, payType).accounts({
             buyer: buyer,
+            seller: seller,
             buyerNftTokenAccount: buyerNftAccount,
             buyerPayingTokenAccount: buyerPayingAccount,
             marketplace: this.marketplacePDA,
             marketplaceDestAccount: marketplaceAccount.feesDestination,
+            marketplaceAuthority: marketplaceAccount.authority,
             collection: this.collectionPDA,
             // metadata: await Metadata.getPDA(metadata.mint),
             metadata: await Metadata.getPDA(nftMint),
@@ -208,19 +218,23 @@ export class Collection {
 
     async buy(
         nftMint: PublicKey,
+        seller: PublicKey,
         sellOrdersPDA: PublicKey[],
         buyerNftAccount: PublicKey,
         buyerPayingAccount: PublicKey,
         wanted_quantity: anchor.BN,
         buyer: PublicKey,
+        payType: number
     ): Promise<string> {
         let ix = await this.buyInstruction(
             nftMint,
+            seller,
             sellOrdersPDA,
             buyerNftAccount,
             buyerPayingAccount,
             wanted_quantity,
             buyer,
+            payType,
         )
 
         return this._sendInstruction(ix, [])
@@ -239,20 +253,29 @@ export class Collection {
         buyerNftTokenAccount: PublicKey,
         buyerTokenAccount: PublicKey,
         buyer: PublicKey,
-        price: anchor.BN,
+        solPrice: anchor.BN,
+        tokenPrice: anchor.BN,
     ): Promise<string> {
         let metadataPDA = await Metadata.getPDA(nftMint)
         let marketplaceAccount = await this.program.account.marketplace.fetch(this.marketplacePDA)
         let escrowPDA = await getEscrowPDA(this.marketplacePDA, marketplaceAccount.mint)
-        let buyOfferPDA = await getBuyOfferPDA(this.marketplacePDA, buyer, nftMint, price);
+        let buyOfferPDA = await getBuyOfferPDA(this.marketplacePDA, buyer, nftMint, solPrice, tokenPrice);
 
-        let ix = await this.program.methods.createBuyOffer(new anchor.BN(price.toString())).accounts({
+        let [storePDA, store_nonce] = await getStorePDA(this.marketplacePDA);
+
+        console.log(this.marketplacePDA.toBase58(), "marketplacePDA")
+        console.log(storePDA.toBase58(), "store")
+        console.log(solPrice.toString(), "solPrice")
+        console.log(tokenPrice.toString(), "tokenPrice")
+
+        let ix = await this.program.methods.createBuyOffer(new anchor.BN(solPrice.toString()), new anchor.BN(tokenPrice.toString()), store_nonce).accounts({
             payer: buyer,
             nftMint: nftMint,
             metadata: metadataPDA,
             marketplace: this.marketplacePDA,
             collection: this.collectionPDA,
             escrow: escrowPDA,
+            store: storePDA,
             buyerPayingAccount: buyerTokenAccount,
             buyerNftAccount: buyerNftTokenAccount,
             buyOffer: buyOfferPDA,
@@ -273,29 +296,93 @@ export class Collection {
         sellerNftAssociatedTokenAccount: PublicKey,
         buyer: PublicKey,
         seller: PublicKey,
-        price: anchor.BN,
+        sellOrderPDA: PublicKey,
+        solPrice: anchor.BN,
+        tokenPrice: anchor.BN,
     ): Promise<string> {
         let metadataPDA = await Metadata.getPDA(nftMint)
         let marketplaceAccount = await this.program.account.marketplace.fetch(this.marketplacePDA)
         let escrowPDA = await getEscrowPDA(this.marketplacePDA, marketplaceAccount.mint)
-        let buyOfferPDA = await getBuyOfferPDA(this.marketplacePDA, buyer, nftMint, price);
+        let buyOfferPDA = await getBuyOfferPDA(this.marketplacePDA, buyer, nftMint, solPrice, tokenPrice);
 
-        let ix = await this.program.methods.executeOffer().accounts({
-            seller: seller,
+        // let storePDA: PublicKey;
+        // let store_nonce: number;
+
+        let [storePDA, store_nonce] = await getStorePDA(this.marketplacePDA);
+
+        let metadata = await getMetadata(
+            this.program?.provider.connection,
+            nftMint,
+        )
+
+        let collection = await this.getCollection()
+        let creatorsAccounts = []
+
+        if (!collection.ignoreCreatorFee) {
+            for (let creator of metadata.data.creators) {
+                let creatorAddress = new PublicKey(creator.address)
+                let creatorATA = await _getAssociatedTokenAddress(creatorAddress, marketplaceAccount.mint)
+
+                creatorsAccounts.push(
+                    { pubkey: creatorAddress, isWritable: true, isSigner: false },
+                )
+                creatorsAccounts.push(
+                    { pubkey: creatorATA, isWritable: true, isSigner: false },
+                )
+            }
+        }
+
+        let programNftVaultPDA = await getNftVaultPDA(nftMint);
+        // let sellOrderPDA = await getSellOrderPDA(sellerNftAssociatedTokenAccount, solPrice, tokenPrice);
+
+
+        // console.log(seller.toBase58(), "seller")
+        // console.log(buyer.toBase58(), "buyer")
+        // console.log(this.marketplacePDA.toBase58(), "marketplace")
+        // console.log(this.collectionPDA.toBase58(), "collection")
+        console.log(marketplaceAccount.authority.toBase58(), "marketplaceAuthority")
+        // console.log(marketplaceAccount.feesDestination.toBase58(), "marketplaceDestAccount")
+        // console.log(escrowPDA.toBase58(), "escrow")
+        // console.log(sellerTokenAccount.toBase58(), "sellerFundsDestAccount")
+        // console.log(sellerNftAssociatedTokenAccount.toBase58(), "sellerNftAccount")
+        // console.log(metadataPDA.toBase58(), "metadata")
+        // console.log(buyOfferPDA.toBase58(), "buyOffer")
+
+        console.log(nftMint.toBase58(), "nftMint")
+        console.log(programNftVaultPDA.toBase58(), "vault")
+        console.log(buyerNftTokenAccount.toBase58(), "destination")
+        console.log(storePDA.toBase58(), "store")
+        console.log(store_nonce.toString(), "store_nonce")
+
+        console.log(seller.toBase58(), "authority")
+        console.log(marketplaceAccount.authority.toBase58(), "marketplaceAuthority")
+        console.log(marketplaceAccount.feesDestination.toBase58(), "marketplaceDestAccount")
+        // console.log(adminTokenAccount.toBase58(), "adminTokenAccount")
+        // console.log(marketplaceAccount.feesDestination.toBase58(), "feesDestination")
+
+        console.log(sellOrderPDA.toBase58(), "sellOrderPDA")
+        // return "dddd";
+
+        let ix = await this.program.methods.executeOffer(store_nonce).accounts({
+            authority: seller,
+            sellerNftTokenAccount: sellerNftAssociatedTokenAccount, //
+            sellOrder: sellOrderPDA,
             buyer: buyer,
             marketplace: this.marketplacePDA,
             collection: this.collectionPDA,
-            marketplaceDestAccount: adminTokenAccount,
+            marketplaceAuthority: marketplaceAccount.authority,
+            marketplaceDestAccount: marketplaceAccount.feesDestination,
             escrow: escrowPDA,
-            sellerFundsDestAccount: sellerTokenAccount,
-            destination: buyerNftTokenAccount,
-            sellerNftAccount: sellerNftAssociatedTokenAccount,
+            store: storePDA,
+            sellerFundsDestAccount: sellerTokenAccount, //
+            destination: buyerNftTokenAccount, //
+            metadata: metadataPDA, //
+            vault: programNftVaultPDA,
             buyOffer: buyOfferPDA,
-            metadata: metadataPDA,
             systemProgram: anchor.web3.SystemProgram.programId,
             tokenProgram: TOKEN_PROGRAM_ID,
             rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-        }).remainingAccounts([{ pubkey: adminTokenAccount, isWritable: true, isSigner: false }]).instruction();
+        }).remainingAccounts([...creatorsAccounts]).instruction();
 
         return this._sendInstruction(ix, [])
     }
@@ -304,18 +391,23 @@ export class Collection {
         nftMint: PublicKey,
         buyerTokenAccount: PublicKey,
         buyer: PublicKey,
-        price: anchor.BN,
+        solPrice: anchor.BN,
+        tokenPrice: anchor.BN,
     ) {
         // let metadataPDA = await Metadata.getPDA(nftMint)
         let marketplaceAccount = await this.program.account.marketplace.fetch(this.marketplacePDA)
         let escrowPDA = await getEscrowPDA(this.marketplacePDA, marketplaceAccount.mint)
-        let buyOfferPDA = await getBuyOfferPDA(this.marketplacePDA, buyer, nftMint, price);
+        // let buyOfferPDA = await getBuyOfferPDA(this.marketplacePDA, buyer, nftMint, price);
+        let buyOfferPDA = await getBuyOfferPDA(this.marketplacePDA, buyer, nftMint, solPrice, tokenPrice);
 
-        let ix = await this.program.methods.removeBuyOffer().accounts({
+        let [storePDA, store_nonce] = await getStorePDA(this.marketplacePDA);
+
+        let ix = await this.program.methods.removeBuyOffer(store_nonce).accounts({
             buyer: buyer,
             buyerPayingAccount: buyerTokenAccount,
             marketplace: this.marketplacePDA,
             escrow: escrowPDA,
+            store: storePDA,
             buyOffer: buyOfferPDA,
             systemProgram: anchor.web3.SystemProgram.programId,
             tokenProgram: TOKEN_PROGRAM_ID,
