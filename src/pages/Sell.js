@@ -58,9 +58,10 @@ const Sell = () => {
             console.log("Error")
             console.log(error, "Getting Nft Metadatas.")
         }
+
         obj.mint = mint;
         obj.uri = decoded.data.uri;
-        obj.creator = obj.data.properties.creators[0].address;
+        obj.creator = new PublicKey(decoded.data.creators[0].address).toBase58();
         obj.creators = obj.data.properties.creators;
 
         setNftInfo(obj);

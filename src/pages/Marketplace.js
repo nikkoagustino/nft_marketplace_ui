@@ -1,3 +1,4 @@
+import axios from 'axios'
 import React, { useState, useEffect } from 'react';
 import SolanaCoinImg from "../assets/img/solana-coin.webp"
 import KomoCoinImg from "../assets/img/komo-coin.webp"
@@ -27,6 +28,7 @@ const Marketplace = () => {
     }
 
     const [nftList, setNftList] = useState([]);
+    const [itemList, setItemList] = useState([]);
 
 
     const [activeTab, setActiveTab] = useState(0);
@@ -80,14 +82,52 @@ const Marketplace = () => {
         }])
     }, [])
 
+    const testFunc = async() => {
+        console.log("testFunc----------------")
+        let save_dt = {
+            seller: "3r9k82jXaJBQQbNrqf1rdEcxqJz9KwXHwBE3ucgqrxbi",
+            buyer: "FgLQFYNyaZ6kFhSofzrKBDwp6ZXDxFMdTCNARfCMEzt",
+            tx_id: "5fm8FNeos1oFZ8wW1az4jkagHzA5fZRewzSE1U7cEEYRXjcmuxNmhSafueresyqFMVJX7DMKYzX8cpsf9DK5q4jM",
+            tx_type: "items"
+        }
+
+        await axios.post('https://api.komoverse.io/v1/add-transaction', save_dt)
+            .then(function (response) {
+                console.log(response.data, "success");
+            })
+            .catch(function (error) {
+                console.log(error);
+            });
+
+            // axios({
+            //     method: 'post',
+            //     baseURL: 'https://api.komoverse.io/v1/',
+            //     url: '/add-transaction',
+            //     data: save_dt
+            //   }).then(response => {
+            //     console.log(response.data, "success");
+            //   })
+            //   .catch(error => {
+            //     console.log(error)
+            //   });
+    }
+
 
     useEffect(async () => {
         if (publicKey) {
             console.log("artwork effect")
+            
+
             let cProvider = await getProvider();
-            let sellOrders = await getListedNfts(cProvider);
-            if (sellOrders.length) {
-                setNftList(sellOrders)
+            let sellNftOrders = await getListedNfts(cProvider, "nft");
+            let sellItemOrders = await getListedNfts(cProvider, "item");
+
+            if (sellNftOrders.length) {
+                setNftList(sellNftOrders)
+            }
+
+            if (sellItemOrders.length) {
+                setItemList(sellItemOrders)
             }
         }
     }, [publicKey])
@@ -226,7 +266,7 @@ const Marketplace = () => {
                                 <div className="col-lg-10 p-3">
                                     <div className="row">
                                         <div className="col-6 col-lg-8">
-                                            <h3 className="fw-bold">{gameNfts.length} Items</h3>
+                                            <h3 className="fw-bold">{itemList.length} Items</h3>
                                         </div>
                                         <div className="d-none p-0 d-lg-inline-block col-lg-1 align-baseline">
                                             Sort by :
@@ -242,22 +282,24 @@ const Marketplace = () => {
                                     </div>
                                     <div className="col-12 col-md-4 col-lg-3">
                                         {
-                                            gameNfts.map((gameNft, ind) => <div className="listing-box mb-3 p-3" key={ind}>
-                                                <span className="title">{gameNft.name}</span>
-                                                <img src={gameNft.img} className="my-2" alt={gameNft.name} />
-                                                <div className="row">
-                                                    <div className="col-12">{gameNft.description}</div>
-                                                </div>
-                                                <div className="row mt-2 fw-bold">
-                                                    <div className="col-6">
-                                                        <img src={SolanaCoinImg} alt="SOL" className="currency" />
-                                                        {gameNft.solPrice} SOL
+                                            itemList.map((item, ind) => <div className="listing-box mb-3 p-3" key={ind}>
+                                                <Link to={"/buy/" + item.mint}>
+                                                    <span className="title">{item.data.name}</span>
+                                                    <img src={item.data.image} className="my-2" alt={item.data.name} />
+                                                    <div className="row">
+                                                        <div className="col-12">{"description"}</div>
                                                     </div>
-                                                    <div className="col-6">
-                                                        <img src={KomoCoinImg} alt="KOMO" className="currency" />
-                                                        {gameNft.komoPrice} KOMO
+                                                    <div className="row mt-2 fw-bold">
+                                                        <div className="col-6">
+                                                            <img src={SolanaCoinImg} alt="SOL" className="currency" />
+                                                            {item.account.solPrice.toString() / (10 ** 9)} SOL
+                                                        </div>
+                                                        <div className="col-6">
+                                                            <img src={KomoCoinImg} alt="KOMO" className="currency" />
+                                                            {item.account.tokenPrice.toString() / (10 ** 9)} KOMO
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                </Link>
                                             </div>)
                                         }
                                     </div>

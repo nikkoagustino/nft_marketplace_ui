@@ -4,7 +4,17 @@ import SolanaCoinImg from "../assets/img/solana-coin.webp"
 import KomoCoinImg from "../assets/img/komo-coin.webp"
 import KomoNftImg from "../assets/img/komo-nft.webp"
 
+import * as anchor from "@project-serum/anchor";
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+
+import axios from 'axios'
+import { getStorePDA, getEscrowPDA } from '../app/api/js/getPDAs'
+import { marketplacePDA, mintPubkey } from '../app/api/config'
+
 const Home = () => {
+
+    const { connection } = useConnection();
+
     const [activeTab, setActiveTab] = useState(0);
     const [coinInfos, setCoinInfos] = useState({
         totalSales: 0,
@@ -14,6 +24,56 @@ const Home = () => {
     })
     const [buyList, setBuyList] = useState([]);
     const [recentTransactions, setRecentTransactions] = useState([]);
+
+    const [totalSales, setTotalSales] = useState(0);
+    const [soldKomo, setSoldKomo] = useState(0);
+
+
+    const getAllTransactionCount = async () => {
+        let count = 0;
+        try {
+            count = await axios.get('https://api.komoverse.io/v1/transaction/all')
+        } catch (error) {
+            console.log(error);
+        }
+
+        // console.log(count, "count");
+        setTotalSales(count.data);
+    }
+    const getNFTTransactionCount = async () => {
+        let count = 0;
+        try {
+            count = await axios.get('https://api.komoverse.io/v1/transaction/nft')
+        } catch (error) {
+            console.log(error);
+        }
+
+        // console.log(count, "nft count");
+        setSoldKomo(count.data);
+    }
+    const getItemsTransactionCount = async () => {
+        let count = 0;
+        try {
+            count = await axios.get('https://api.komoverse.io/v1/transaction/items')
+        } catch (error) {
+            console.log(error);
+        }
+
+        // console.log(count, "items count");
+        // setSoldKomo(count.data);
+    }
+
+    const getAllBalances = async () => {
+        const [storePubkey, storeNonce] = await getStorePDA(marketplacePDA);
+        console.log(storePubkey.toBase58(), "storePubkey");
+        console.log(connection, "connection");
+        try {
+            let storeBalance = await connection.getBalance(storePubkey);
+            console.log(storeBalance, "storeBalance")
+        } catch (error) {
+            console.log(error, "error")            
+        }
+    }
 
     useEffect(() => {
         setCoinInfos((prevState) => ({
@@ -26,6 +86,14 @@ const Home = () => {
     }, [activeTab])
 
     useEffect(() => {
+        console.log("jkl")
+
+        getAllTransactionCount();
+        getNFTTransactionCount();
+        getItemsTransactionCount();
+
+        getAllBalances();
+
         setBuyList([
             {
                 mint: "111111"
@@ -41,6 +109,8 @@ const Home = () => {
                 price: '4.5 SOL'
             }
         ])
+
+
     }, [])
 
     return (
@@ -72,7 +142,7 @@ const Home = () => {
                                             </div>
                                             <div className="col-8">
                                                 <span className="dash-sm">Total Sales</span>
-                                                <span className="dash-lg">{coinInfos.totalSales}</span>
+                                                <span className="dash-lg">{totalSales}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -105,7 +175,7 @@ const Home = () => {
                                             </div>
                                             <div className="col-8">
                                                 <span className="dash-sm">Komodo Sold</span>
-                                                <span className="dash-lg">{coinInfos.nftSold}</span>
+                                                <span className="dash-lg">{soldKomo}</span>
                                             </div>
                                         </div>
                                     </div>
