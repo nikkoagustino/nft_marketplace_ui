@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import SolanaCoinImg from "../assets/img/solana-coin.webp"
-import KomoCoinImg from "../assets/img/komo-coin.webp"
-import KomoNftImg from "../assets/img/nft/9950.png"
+import SolanaCoinImg from "../../assets/img/solana-coin.webp"
+import KomoCoinImg from "../../assets/img/komo-coin.webp"
+import KomoNftImg from "../../assets/img/nft/9950.png"
 import { Link } from 'react-router-dom';
 
-import { getListedNfts } from "../app/api/index";
+import { getListedNfts } from "../../app/api/index";
 
 import * as anchor from "@project-serum/anchor";
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
@@ -83,7 +83,6 @@ const Marketplace = () => {
 
     useEffect(async () => {
         if (publicKey) {
-            console.log("artwork effect")
             let cProvider = await getProvider();
             let sellOrders = await getListedNfts(cProvider);
             if (sellOrders.length) {
@@ -94,8 +93,8 @@ const Marketplace = () => {
 
     return (<div className="container-fluid">
         <div className="row">
-            <div className="col-12 pt-4 px-0">
-                <div className="col-12 pt-4 px-0">
+            <div className="col-12 px-0">
+                <div className="col-12 px-0">
                     <ul className="nav nav-pills border-bottom" id="pills-tab" role="tablist">
                         <li className="nav-item ms-3" role="presentation">
                             <button className={"nav-link fw-bold" + (activeTab === 0 ? " active" : "")} id="pills-nft-tab" onClick={() => setActiveTab(0)}>Komoverse NFTs</button>

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import SolanaCoinImg from "../assets/img/solana-coin.webp"
-import KomoCoinImg from "../assets/img/komo-coin.webp"
-import KomoNftImg from "../assets/img/komo-nft.webp"
+import SolanaCoinImg from "../../assets/img/solana-coin.webp"
+import KomoCoinImg from "../../assets/img/komo-coin.webp"
+import KomoNftImg from "../../assets/img/komo-nft.webp"
+import "./Home.css";
 
 const Home = () => {
     const [activeTab, setActiveTab] = useState(0);
@@ -44,9 +45,22 @@ const Home = () => {
     }, [])
 
     return (
-        <div className="main">
+        <>
             <div className="container">
-                <div className="row mt-5">
+                <div className="row intro">
+                    <div className='col-12 py-3 px-0 white-box whitepaper-box'>
+                        <div>
+                            <p>Komovers: Nexus Hub is live in Early Access!</p>
+                            <div>
+                                <Link to={'/'} className='download-game'>Download Komoverse Game</Link>
+                                <Link to={'/'} className='read-announcement'>Read the announcement</Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div className="container">
+                <div className="row total-statistic">
                     <div className="col-12 py-3 px-0 white-box">
                         <ul className="nav nav-pills mb-3 border-bottom" id="pills-tab" role="tablist">
                             <li className="nav-item ms-3" role="presentation">
@@ -234,7 +248,7 @@ const Home = () => {
                     </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 };
 

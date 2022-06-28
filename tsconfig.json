@@ -7,6 +7,9 @@
       ],
       "crypto": [
         "../../node_modules/crypto-js"
+      ],
+      "path-to-regexp": [
+        "../../node_modules/path-to-regexp/dist/index"
       ]
     },
     "target": "es5",

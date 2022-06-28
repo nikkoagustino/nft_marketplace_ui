@@ -13,15 +13,16 @@ import {
 } from '@solana/wallet-adapter-wallets';
 import { clusterApiUrl } from '@solana/web3.js';
 
-import Home from './pages/Home';
+import Home from './pages/Home/Home';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './assets/css/main.css';
-import Marketplace from './pages/Marketplace';
-import Header from './pages/Header';
+import Marketplace from './pages/Marketplace/Marketplace';
 import Account from './pages/Account';
-import Buy from './pages/Buy';
+import Buy from './pages/Buy/Buy';
 import Sell from './pages/Sell';
 import Mint from './pages/Mint';
+import Base from './components/Base/Base';
+import { useStore } from './zustand';
 
 // Default styles that can be overridden by your app
 require('@solana/wallet-adapter-react-ui/styles.css');
@@ -29,6 +30,8 @@ require('@solana/wallet-adapter-react-ui/styles.css');
 const App = () => {
     // Can be set to 'devnet', 'testnet', or 'mainnet-beta'
     const network = WalletAdapterNetwork.Devnet;
+    const { isExpended } = useStore();
+    console.log(isExpended)
 
     // You can also provide a custom RPC endpoint
     // const endpoint = 'https://blue-delicate-wildflower.solana-mainnet.quiknode.pro/2f054b4c3a7d3f8841b584875204e3aa7c42d8ab/';
@@ -54,15 +57,17 @@ const App = () => {
         <ConnectionProvider endpoint={endpoint}>
             <WalletProvider wallets={wallets} autoConnect>
                 <Router>
-                    <Header />
-                    <Routes>
-                        <Route exact path="/" element={<Home />} />
-                        <Route exact path="/marketplace" element={<Marketplace />} />
-                        <Route exact path="/account" element={<Account />} />
-                        <Route exact path="/buy/:mint" element={<Buy />} />
-                        <Route exact path="/sell/:mint" element={<Sell />} />
-                        <Route exact path="/mint" element={<Mint />} />
-                    </Routes>
+                    <Base />
+                    <div className={"main" + (isExpended ? '' : ' collapsed')}>
+                        <Routes>
+                            <Route exact path="/" element={<Home />} />
+                            <Route exact path="/marketplace" element={<Marketplace />} />
+                            <Route exact path="/account" element={<Account />} />
+                            <Route exact path="/buy/:mint" element={<Buy />} />
+                            <Route exact path="/sell/:mint" element={<Sell />} />
+                            <Route exact path="/mint" element={<Mint />} />
+                        </Routes>
+                    </div>
                 </Router>
             </WalletProvider>
 

@@ -1,0 +1,32 @@
+.total-statistic,
+.intro {
+    padding-left: 0.7rem;
+    padding-right: 0.7rem;
+    margin-bottom: 20px;
+}
+
+.intro .white-box>div {
+    padding: 20px;
+}
+
+.whitepaper-box {
+    background-image: url('../../assets/img/head_banner.png');
+    background-size: 100% 100%;
+}
+
+.whitepaper-box a.download-game {
+    padding: 10px 20px;
+    background: linear-gradient(180deg, #007e05 0%, rgb(0 16 1) 100%);
+    border-radius: 23px;
+}
+
+.whitepaper-box a.read-announcement {
+    color: #03b50a;
+    font-weight: bold;
+    margin-left: 20px;
+}
+
+.whitepaper-box p {
+    font-size: 2rem;
+    font-weight: 600;
+}

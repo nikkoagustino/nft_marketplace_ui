@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from "axios";
 
-import NftImage from "../assets/img/nft/9950.png"
-import { getNFTInfoBySellOrder, buy } from "../app/api/index";
+import { getNFTInfoBySellOrder, buy } from "../../app/api/index";
 
 import * as anchor from "@project-serum/anchor";
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
@@ -50,14 +49,14 @@ const Buy = () => {
         if (cProvider) {
             // let nftDt = await nftData.find(n => n.mint === selectedNFT);
             let result = await buy(cProvider, publicKey, nftInfo, type);
-            if(result) {
+            if (result) {
                 navigate("/account")
             }
         }
     }
 
     return (<div class="container">
-        <div class="row">
+        <div class="row" style={{ padding: "0 20px" }}>
             <div class="col-12 pt-4 px-0">
                 {/* <h1>Buy Items</h1> */}
                 <h2>{nftInfo.data.name ? nftInfo.data.name : ""}</h2>
