@@ -6,6 +6,12 @@ import axios from "axios";
 
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { collectionPubkey, itemCollectionPubkey } from "../app/api/config";
+
+import {
+    getParsedNftAccountsByOwner,
+    isValidSolanaAddress,
+} from "@nfteyez/sol-rayz";
 
 const opts = {
     preflightCommitment: "processed"
@@ -19,6 +25,7 @@ const Account = () => {
     const wallet = useWallet();
 
     const [nftData, setNftData] = useState([]);
+    const [itemList, setItemList] = useState([]);
 
     const [activeTab, setActiveTab] = useState(0);
     const [activeInventory, setActiveInventory] = useState(0);
@@ -44,13 +51,28 @@ const Account = () => {
         }
     };
 
+    const _getAllNftData = async (walletPubKey) => {
+        try {
+            const nfts = await getParsedNftAccountsByOwner({
+                publicAddress: walletPubKey,
+                connection: connection,
+                serialization: true,
+            });
+
+            return nfts;
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
     const setNftTokenData = async (walletPubKey) => {
         try {
             let nftsubData = [];
-            nftsubData = await getAllNftData(walletPubKey);
+            nftsubData = await _getAllNftData(walletPubKey);
             console.log(nftsubData, 'nftsubData');
             let data = Object.keys(nftsubData).map((key) => nftsubData[key]);
             let arr = [];
+            let items = [];
 
             // var stakedNFTs = await getStakedNFTs();
             // for (let i = 0; i < stakedNFTs.length; i++) {
@@ -61,6 +83,7 @@ const Account = () => {
             // let n = 10;
             console.log(data, "over here")
             for (let i = 0; i < n; i++) {
+
                 // if (nfts.indexOf(data[i].mint) === -1) {
                 // 	continue;
                 // }
@@ -76,18 +99,32 @@ const Account = () => {
                         }
                     }
                 }
+
                 console.log(val, "val")
+
                 if (data[i].staked !== true) data[i].staked = false;
                 val.mint = data[i].mint;
                 val.staked = data[i].staked;
                 val.creator = data[i].data.creators[0].address;
                 val.creators = data[i].data.creators;
                 val.storeId = data[i].storeId;
-                arr.push(val);
+
+                if (data[i].data.creators[0].address === collectionPubkey.toBase58()) {
+                    arr.push(val);
+                }
+
+                if (data[i].data.creators[0].address === itemCollectionPubkey.toBase58()) {
+                    items.push(val);
+                }
+
             }
 
             console.log(arr, "arr11111")
+            console.log(items, "items")
+
             setNftData(arr)
+            setItemList(items)
+
         } catch (error) {
             console.log(error);
         }
@@ -202,18 +239,22 @@ const Account = () => {
                                     <div className="row m-0">
                                         <div className="col-lg-12 p-3">
                                             <div className="row mt-4">
-                                                <div className="col-12 col-md-4 col-lg-3">
-                                                    <div className="listing-box mb-3 p-3">
-                                                        <span className="title">Draw Extra Card #547</span>
-                                                        <img src={CardDrawImg} className="my-2" alt="Komoverse #9950" />
-                                                        <div className="row">
-                                                            <div className="col-12">
-                                                                When player use this item, grant extra 1 card draw from the deck. This item can be used once per match.
-                                                                <Link to="/sell/1111111" className="btn btn-filter btn-primary">SELL</Link>
+                                                {itemList.map((item, i) => {
+                                                    return (
+                                                        <div key={i} className="col-12 col-md-4 col-lg-3">
+                                                            <div className="listing-box mb-3 p-3">
+                                                                <span className="title">{item.data.name}</span>
+                                                                <img src={item.data.image} className="my-2" alt="Komoverse #9950" />
+                                                                <div className="row">
+                                                                    <div className="col-12">
+                                                                        When player use this item, grant extra 1 card draw from the deck. This item can be used once per match.
+                                                                        <Link to={`/sell/${item.mint}`} className="btn btn-filter btn-primary">SELL</Link>
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                </div>
+                                                    )
+                                                })}
                                             </div>
                                         </div>
                                     </div>

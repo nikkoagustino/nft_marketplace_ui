@@ -10,7 +10,7 @@ import {
 
 import { Connection, clusterApiUrl, LAMPORTS_PER_SOL, Keypair, PublicKey } from "@solana/web3.js";
 
-import { mintPubkey, marketplacePDA, adminPubkey, collectionPubkey } from './config'
+import { mintPubkey, marketplacePDA, adminPubkey, collectionPubkey, itemCollectionPubkey } from './config'
 
 import { Marketplace } from './js/marketplace';
 import { Collection } from "./js/collection";
@@ -120,6 +120,8 @@ export const FilterWalletNfts = async (address) => {
 
 export const sell = async (provider, seller, nftDt, solPrice, tokenPrice) => {
 
+    console.log(nftDt, "nftDt0000000000")
+
     let sellerTokenAccount = await getAssociatedTokenAddress(mintPubkey, seller);
 
     let sellerAccountInfo = await provider.connection.getAccountInfo(sellerTokenAccount)
@@ -135,8 +137,9 @@ export const sell = async (provider, seller, nftDt, solPrice, tokenPrice) => {
     let mint = new PublicKey(nftDt.mint);
     let sellerNftAssociatedTokenAccount = await getAssociatedTokenAddress(mint, seller)
 
+
     let marketplace = new Marketplace(provider, marketplacePDA);
-    let collectionPDA = await getCollectionPDA(marketplace.marketplacePDA, collectionPubkey)
+    let collectionPDA = await getCollectionPDA(marketplace.marketplacePDA, new PublicKey(nftDt.creator))
     let collection = new Collection(provider, marketplace.marketplacePDA, collectionPDA)
 
     try {
@@ -159,7 +162,7 @@ export const sell = async (provider, seller, nftDt, solPrice, tokenPrice) => {
 
 }
 
-export const getListedNfts = async (provider) => {
+export const getListedNfts = async (provider, type) => {
     let marketplace = new Marketplace(provider, marketplacePDA);
     let sellOrders = await marketplace.getAllAccounts();
 
@@ -181,13 +184,25 @@ export const getListedNfts = async (provider) => {
                 console.log("Error")
                 console.log(error, "Getting Nft Metadatas.")
             }
+
             obj.mint = order.publicKey.toBase58();
             obj.uri = decoded.data.uri;
             obj.account = order.account;
+            obj.creator = new PublicKey(decoded.data.creators[0].address).toBase58();
+            obj.creators = obj.data.properties.creators;
 
-            if (order.account.quantity.toString() !== "0") {
-                datas.push(obj);
+            if (type === "nft" && obj.creator === collectionPubkey.toBase58()) {
+                if (order.account.quantity.toString() !== "0") {
+                    datas.push(obj);
+                }
             }
+
+            if (type === "item" && obj.creator === itemCollectionPubkey.toBase58()) {
+                if (order.account.quantity.toString() !== "0") {
+                    datas.push(obj);
+                }
+            }
+
         }
     }
 
@@ -215,6 +230,8 @@ export const getNFTInfoBySellOrder = async (provider, sellOrderPDA) => {
     // obj.mint = order.publicKey.toBase58();
     obj.uri = decoded.data.uri;
     obj.account = order;
+    obj.creator = new PublicKey(decoded.data.creators[0].address).toBase58();
+    obj.creators = obj.data.properties.creators;
 
     return obj;
 }
@@ -247,7 +264,7 @@ export const buy = async (provider, buyer, nftInfo, payType) => {
 
     let marketplace = new Marketplace(provider, marketplacePDA);
 
-    let collectionPDA = await getCollectionPDA(marketplace.marketplacePDA, collectionPubkey)
+    let collectionPDA = await getCollectionPDA(marketplace.marketplacePDA, new PublicKey(nftInfo.creator))
     let collection = new Collection(provider, marketplace.marketplacePDA, collectionPDA)
 
     let seller = new PublicKey(nftInfo.account.authority);
@@ -262,12 +279,14 @@ export const buy = async (provider, buyer, nftInfo, payType) => {
         await program.provider.send(tx, [])
     }
 
+    let sellOrderPDA = await getSellOrderPDA(sellerNftAssociatedTokenAccount, new BN(nftInfo.account.solPrice), new BN(nftInfo.account.tokenPrice));
+
     try {
-        await collection.buy(
+        let tx_id = await collection.buy(
             nftMint,
             seller,
             [
-                await getSellOrderPDA(sellerNftAssociatedTokenAccount, new BN(nftInfo.account.solPrice), new BN(nftInfo.account.tokenPrice)),
+                sellOrderPDA,
             ],
             buyerNftATA,
             buyerTokenATA,
@@ -276,17 +295,58 @@ export const buy = async (provider, buyer, nftInfo, payType) => {
             payType,
         )
 
-        console.log("success")
-        alert("Success")
-        return true;
+        console.log(tx_id, "success")
+        console.log(sellOrderPDA, "sellOrderPDA")
+        let tx_type = "";
+        if (new PublicKey(nftInfo.creator).toBase58() === collectionPubkey.toBase58()) {
+            tx_type = "nft"
+        }
+
+        if (new PublicKey(nftInfo.creator).toBase58() === itemCollectionPubkey.toBase58()) {
+            tx_type = "items"
+        }
+
+        let currency = "";
+        let amount = "";
+
+        if (payType === 1) {
+            currency = "SOL"
+            amount = nftInfo.account.solPrice;
+        } else if (payType === 2) {
+            currency = "KOMO"
+            amount = nftInfo.account.tokenPrice;
+        }
+
+        let save_dt = {
+            seller: seller.toBase58(),
+            buyer: buyer.toBase58(),
+            tx_id: tx_id,
+            tx_type: tx_type,
+            amount: amount,
+            currency: currency,
+            custom_param: sellOrderPDA
+        }
+
+        console.log(save_dt, "save_dt")
+
+        try {
+            let result = await axios.post('https://api.komoverse.io/v1/add-transaction', save_dt)
+            console.log(result.data, "success");
+            alert(result.data.status)
+            return true;
+        } catch (error) {
+            console.log(error);
+            alert(error.message)
+        }
+
         // let buyerNftAccountAfterSell = await nftMint.getAccountInfo(buyerNftATA)
         // assert.equal(buyerNftAccountAfterSell.amount.toNumber(), 1)
 
     } catch (error) {
-        console.log(error, "Transaction error in buy.");
-        alert("Failure")
-        return false;
-    }
+    console.log(error, "Transaction error in buy.");
+    alert("Failure")
+    return false;
+}
 }
 
 
