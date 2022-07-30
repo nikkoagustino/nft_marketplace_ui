@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import CardDrawImg from "../assets/img/items/card-draw.png";
 
 import axios from "axios";
 
@@ -8,33 +7,32 @@ import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { collectionPubkey, itemCollectionPubkey } from "../app/api/config";
 
-import {
-    getParsedNftAccountsByOwner,
-    isValidSolanaAddress,
-} from "@nfteyez/sol-rayz";
+import * as borsh from 'borsh';
 
-const opts = {
-    preflightCommitment: "processed"
-}
-
+import { METADATA_SCHEMA, Metadata } from '../app/api/metadata';
+import { PublicKey } from '@solana/web3.js';
 
 const Account = () => {
 
     const { connection } = useConnection();
-    const { publicKey, signTransaction } = useWallet();
-    const wallet = useWallet();
+    const { publicKey } = useWallet();
 
     const [nftData, setNftData] = useState([]);
     const [itemList, setItemList] = useState([]);
+    const [nfts, setNfts] = useState([]);
 
     const [activeTab, setActiveTab] = useState(0);
     const [activeInventory, setActiveInventory] = useState(0);
 
     useEffect(() => {
         if (publicKey) {
-            setNftTokenData(publicKey)
+            getAllNftData(publicKey)
         }
     }, [publicKey])
+
+    useEffect(() => {
+        getParsedNftData();
+    }, [nfts]);
 
 
     const getAllNftData = async (walletPubKey) => {
@@ -44,87 +42,85 @@ const Account = () => {
             })
 
             const nfts = allTokenAccounts.value.filter(nft => nft.account.data.parsed.info.tokenAmount.decimals === 0 &&
-                nft.account.data.parsed.info.tokenAmount.uiAmount == 1);
+                nft.account.data.parsed.info.tokenAmount.uiAmount === 1);
+            setNfts(nfts);
             return nfts;
         } catch (error) {
             console.log(error);
         }
     };
 
-    const _getAllNftData = async (walletPubKey) => {
-        try {
-            const nfts = await getParsedNftAccountsByOwner({
-                publicAddress: walletPubKey,
-                connection: connection,
-                serialization: true,
-            });
+    const decodeMetadata = (buffer) => {
+        return borsh.deserializeUnchecked(METADATA_SCHEMA, Metadata, buffer);
+    }
 
-            return nfts;
-        } catch (error) {
-            console.log(error);
-        }
+    const getMetadata = async (mint) => {
+        const TOKEN_METADATA_PROGRAM_ID = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
+        return (
+            await PublicKey.findProgramAddress(
+                [
+                    Buffer.from('metadata'),
+                    TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+                    mint.toBuffer(),
+                ],
+                TOKEN_METADATA_PROGRAM_ID,
+            )
+        )[0];
     };
 
-    const setNftTokenData = async (walletPubKey) => {
+    const getParsedNftData = async () => {
         try {
-            let nftsubData = [];
-            nftsubData = await _getAllNftData(walletPubKey);
-            console.log(nftsubData, 'nftsubData');
-            let data = Object.keys(nftsubData).map((key) => nftsubData[key]);
+            let result = [];
             let arr = [];
             let items = [];
+            for (let i = 0; i < nfts.length; i++) {
+                const mint = new PublicKey(nfts[i].account.data.parsed.info.mint);
+                // eslint-disable-next-line no-loop-func
+                getMetadata(mint).then(metaPubkey => {
+                    connection.getAccountInfo(metaPubkey).then(metadataObj => {
+                        const metadataDecoded = decodeMetadata(
+                            Buffer.from(metadataObj.data),
+                        );
+                        axios.get(metadataDecoded.data.uri).then(({ data }) => {
+                            let parsedNft = result.find((nft) => nft.mint === mint.toBase58())
+                            parsedNft.creators = metadataDecoded.data.creators;
+                            parsedNft = {
+                                ...parsedNft,
+                                ...data
+                            }
 
-            // var stakedNFTs = await getStakedNFTs();
-            // for (let i = 0; i < stakedNFTs.length; i++) {
-            //     data.push(stakedNFTs[i]);
-            // }
 
-            let n = data.length;
-            // let n = 10;
-            console.log(data, "over here")
-            for (let i = 0; i < n; i++) {
+                            if (parsedNft.creators[0].address === collectionPubkey.toBase58()) {
+                                arr.push(parsedNft);
+                            }
 
-                // if (nfts.indexOf(data[i].mint) === -1) {
-                // 	continue;
-                // }
-                let val = {};
-                try {
-                    val = await axios.get(data[i].data.uri);
-                } catch (err) {
-                    val = {
-                        data: {
-                            name: "",
-                            count: 0,
-                            image: "",
-                        }
+                            if (parsedNft.creators[0].address === itemCollectionPubkey.toBase58()) {
+                                items.push(parsedNft);
+                            }
+
+                            setItemList([...items]);
+                            setNftData([...arr])
+                        }).catch(e => {
+                            console.log(e)
+                            result = result.filter((nft) => nft.mint !== mint.toBase58())
+                            setItemList([...items]);
+                            setNftData([...arr])
+                        });
+                    });
+                });
+
+                result.push({
+                    mint: mint.toBase58(),
+                    data: {
+                        name: "",
+                        count: 0,
+                        image: "",
                     }
-                }
-
-                console.log(val, "val")
-
-                if (data[i].staked !== true) data[i].staked = false;
-                val.mint = data[i].mint;
-                val.staked = data[i].staked;
-                val.creator = data[i].data.creators[0].address;
-                val.creators = data[i].data.creators;
-                val.storeId = data[i].storeId;
-
-                if (data[i].data.creators[0].address === collectionPubkey.toBase58()) {
-                    arr.push(val);
-                }
-
-                if (data[i].data.creators[0].address === itemCollectionPubkey.toBase58()) {
-                    items.push(val);
-                }
-
+                });
             }
 
-            console.log(arr, "arr11111")
-            console.log(items, "items")
-
+            setItemList(items);
             setNftData(arr)
-            setItemList(items)
-
         } catch (error) {
             console.log(error);
         }

@@ -5,12 +5,14 @@ import KomoCoinImg from "../../assets/img/komo-coin.webp"
 import KomoNftImg from "../../assets/img/komo-nft.webp"
 import "./Home.css";
 
-import * as anchor from "@project-serum/anchor";
-import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { useConnection } from '@solana/wallet-adapter-react';
 
-import axios from 'axios'
-import { getStorePDA, getEscrowPDA } from '../app/api/js/getPDAs'
-import { marketplacePDA, mintPubkey } from '../app/api/config'
+import { getStorePDA, getEscrowPDA } from '../../app/api/js/getPDAs'
+import { marketplacePDA, mintPubkey } from '../../app/api/config'
+import { MARKETPLACE_PROGRAM_ID } from '../../app/api/js/constant';
+
+import { getTransactions } from '../../api';
+import { getDateString } from '../../utils/dateFormater';
 
 const Home = () => {
 
@@ -20,6 +22,7 @@ const Home = () => {
     const [coinInfos, setCoinInfos] = useState({
         totalSales: 0,
         totalSolVolume: 0,
+
         totalKomoVolume: 0,
         nftSold: 0
     })
@@ -28,52 +31,30 @@ const Home = () => {
 
     const [totalSales, setTotalSales] = useState(0);
     const [soldKomo, setSoldKomo] = useState(0);
-
-
-    const getAllTransactionCount = async () => {
-        let count = 0;
-        try {
-            count = await axios.get('https://api.komoverse.io/v1/transaction/all')
-        } catch (error) {
-            console.log(error);
-        }
-
-        // console.log(count, "count");
-        setTotalSales(count.data);
-    }
-    const getNFTTransactionCount = async () => {
-        let count = 0;
-        try {
-            count = await axios.get('https://api.komoverse.io/v1/transaction/nft')
-        } catch (error) {
-            console.log(error);
-        }
-
-        // console.log(count, "nft count");
-        setSoldKomo(count.data);
-    }
-    const getItemsTransactionCount = async () => {
-        let count = 0;
-        try {
-            count = await axios.get('https://api.komoverse.io/v1/transaction/items')
-        } catch (error) {
-            console.log(error);
-        }
-
-        // console.log(count, "items count");
-        // setSoldKomo(count.data);
-    }
+    const [transactions, setTransactions] = useState([]);
 
     const getAllBalances = async () => {
-        const [storePubkey, storeNonce] = await getStorePDA(marketplacePDA);
+        const [storePubkey] = await getStorePDA(marketplacePDA);
         console.log(storePubkey.toBase58(), "storePubkey");
-        console.log(connection, "connection");
         try {
             let storeBalance = await connection.getBalance(storePubkey);
             console.log(storeBalance, "storeBalance")
         } catch (error) {
-            console.log(error, "error")            
+            console.log(error, "error")
         }
+    }
+
+    const getRecentTransactions = async () => {
+        const signatureObjects = await connection.getSignaturesForAddress(MARKETPLACE_PROGRAM_ID, {
+            limit: 10
+        });
+
+        const signatures = signatureObjects.map(signatureObject => {
+            return signatureObject.signature
+        })
+
+        const parsedTransactions = await connection.getParsedTransactions(signatures);
+        setTransactions(parsedTransactions);
     }
 
     useEffect(() => {
@@ -87,13 +68,14 @@ const Home = () => {
     }, [activeTab])
 
     useEffect(() => {
-        console.log("jkl")
-
-        getAllTransactionCount();
-        getNFTTransactionCount();
-        getItemsTransactionCount();
+        const now = new Date();
+        const before10 = new Date();
+        before10.setDate(now.getDate() - 10);
 
         getAllBalances();
+        getTransactions(getDateString(before10), getDateString(now)).then(data => {
+            console.log(data)
+        });
 
         setBuyList([
             {
