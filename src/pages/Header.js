@@ -1,10 +1,23 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
     WalletModalProvider,
     WalletMultiButton
 } from '@solana/wallet-adapter-react-ui';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { getUserInfoByWalletId } from '../api';
+import { useStore } from 'zustand';
 const Header = () => {
+    const { publicKey } = useWallet();
+    const { setUserInfo } = useStore();
+    useEffect(() => {
+        if (publicKey) {
+            getUserInfoByWalletId(publicKey.toBase58()).then((data) => {
+                console.log('userInfo: ', data);
+                setUserInfo(data)
+            });
+        }
+    }, [publicKey])
     return (
         <nav className="navbar navbar-expand-lg navbar-dark bg-dark ">
             <div className="container-fluid">

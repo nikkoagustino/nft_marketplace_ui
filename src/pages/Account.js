@@ -89,14 +89,21 @@ const Account = () => {
                                 ...data
                             }
 
-
-                            if (parsedNft.creators[0].address === collectionPubkey.toBase58()) {
+                            const creator = new PublicKey(parsedNft.creators[0].address);
+                            if (creator.toBase58() === collectionPubkey.toBase58()) {
                                 arr.push(parsedNft);
                             }
 
-                            if (parsedNft.creators[0].address === itemCollectionPubkey.toBase58()) {
+                            if (creator.toBase58() === itemCollectionPubkey.toBase58()) {
                                 items.push(parsedNft);
                             }
+
+                            parsedNft.attributesObject = {};
+                            parsedNft.attributes.map(attr => {
+                                parsedNft.attributesObject[attr.trait_type] = attr.value;
+                            });
+
+                            console.log(parsedNft)
 
                             setItemList([...items]);
                             setNftData([...arr])
@@ -111,11 +118,6 @@ const Account = () => {
 
                 result.push({
                     mint: mint.toBase58(),
-                    data: {
-                        name: "",
-                        count: 0,
-                        image: "",
-                    }
                 });
             }
 
@@ -211,16 +213,14 @@ const Account = () => {
                                                     return (
                                                         <div key={i} className="col-12 col-md-4 col-lg-3">
                                                             <div className="listing-box mb-3 p-3">
-                                                                <span className="title">{nft.data.name}</span>
-                                                                <img src={nft.data.image} className="my-2" alt="Komoverse #9950" />
+                                                                <span className="title">{nft.name}</span>
+                                                                <img src={nft.image} className="my-2" alt={nft.name} />
                                                                 <p>Breed Count: 0</p>
                                                                 <p>Attributes:</p>
                                                                 <ul>
-                                                                    <li>Head: Chameleon Purle</li>
-                                                                    <li>Body: Wizard</li>
-                                                                    <li>Weapon: Desert Eagle</li>
-                                                                    <li>Headgear: Magician Hat</li>
-                                                                    <li>Background: Cloud Stroke Yellow</li>
+                                                                    {
+                                                                        Object.keys(nft.attributesObject).map(key => <li>{key}: {nft.attributesObject[key]}</li>)
+                                                                    }
                                                                 </ul>
                                                                 <Link to={`/sell/${nft.mint}`} className="btn btn-filter btn-primary">SELL</Link>
                                                             </div>
@@ -239,8 +239,8 @@ const Account = () => {
                                                     return (
                                                         <div key={i} className="col-12 col-md-4 col-lg-3">
                                                             <div className="listing-box mb-3 p-3">
-                                                                <span className="title">{item.data.name}</span>
-                                                                <img src={item.data.image} className="my-2" alt="Komoverse #9950" />
+                                                                <span className="title">{item.name}</span>
+                                                                <img src={item.image} className="my-2" alt={item.name} />
                                                                 <div className="row">
                                                                     <div className="col-12">
                                                                         When player use this item, grant extra 1 card draw from the deck. This item can be used once per match.

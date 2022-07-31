@@ -35,9 +35,6 @@ export class Marketplace {
     // createCollection: Function
 
     constructor(provider: anchor.Provider, marketplacePDA: PublicKey) {
-        console.log(idl, "idl -- - - - - --")
-
-        console.log(MARKETPLACE_PROGRAM_ID.toBase58())
         // @ts-ignore
         this.program = new anchor.Program(idl, MARKETPLACE_PROGRAM_ID, provider,)
         this.marketplacePDA = marketplacePDA

@@ -256,7 +256,7 @@
         },
         {
           "name": "marketplace",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -339,6 +339,11 @@
         },
         {
           "name": "vault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "marketplace",
           "isMut": true,
           "isSigner": false
         },
@@ -436,7 +441,7 @@
         },
         {
           "name": "marketplace",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -656,7 +661,7 @@
         },
         {
           "name": "marketplace",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -754,6 +759,22 @@
           {
             "name": "mint",
             "type": "publicKey"
+          },
+          {
+            "name": "totalSol",
+            "type": "u64"
+          },
+          {
+            "name": "totalSpl",
+            "type": "u64"
+          },
+          {
+            "name": "totalSales",
+            "type": "u64"
+          },
+          {
+            "name": "totalSold",
+            "type": "u64"
           }
         ]
       }
@@ -857,38 +878,44 @@
       }
     }
   ],
-  "types": [
+  "errors": [
     {
-      "name": "ErrorCode",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "ErrFeeShouldLowerOrEqualThan10000"
-          },
-          {
-            "name": "ErrTryingToUnlistMoreThanOwned"
-          },
-          {
-            "name": "ErrCouldNotBuyEnoughItem"
-          },
-          {
-            "name": "ErrMetaDataMintDoesNotMatchItemMint"
-          },
-          {
-            "name": "ErrNftNotPartOfCollection"
-          },
-          {
-            "name": "DerivedKeyInvalid"
-          },
-          {
-            "name": "NotInitialized"
-          }
-        ]
-      }
+      "code": 6000,
+      "name": "ErrFeeShouldLowerOrEqualThan10000",
+      "msg": "Fee should be <= 10000"
+    },
+    {
+      "code": 6001,
+      "name": "ErrTryingToUnlistMoreThanOwned",
+      "msg": "Trying to unlist more than owned"
+    },
+    {
+      "code": 6002,
+      "name": "ErrCouldNotBuyEnoughItem",
+      "msg": "Could not buy the required quantity of items"
+    },
+    {
+      "code": 6003,
+      "name": "ErrMetaDataMintDoesNotMatchItemMint",
+      "msg": "metadata mint does not match item mint"
+    },
+    {
+      "code": 6004,
+      "name": "ErrNftNotPartOfCollection",
+      "msg": "nft not part of collection"
+    },
+    {
+      "code": 6005,
+      "name": "DerivedKeyInvalid",
+      "msg": "Derived key invalid"
+    },
+    {
+      "code": 6006,
+      "name": "NotInitialized",
+      "msg": "AccountNotInitialized"
     }
   ],
   "metadata": {
-    "address": "CgG2m718J5EV8FoB5uQatQFW7udCaP355Ws4gqPL6iFC"
+    "address": "kpfUrwV2mGod1R925G2mTR5Z4yownnmYyD6efeHdBLw"
   }
 }

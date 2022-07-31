@@ -2,5 +2,13 @@ import create from 'zustand'
 
 export const useStore = create((set) => ({
     isExpended: true,
-    setExpandOrCollapce: () => set((state) => ({ isExpended: !state.isExpended })),
+    userInfo: {},
+    setExpandOrCollapce: () => set((state) => ({
+        ...state,
+        isExpended: !state.isExpended
+    })),
+    setUserInfo: (userInfo) => set((state) => ({
+        ...state,
+        userInfo
+    }))
 }))

@@ -256,7 +256,7 @@ export type Marketplace = {
         },
         {
           "name": "marketplace",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -339,6 +339,11 @@ export type Marketplace = {
         },
         {
           "name": "vault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "marketplace",
           "isMut": true,
           "isSigner": false
         },
@@ -436,7 +441,7 @@ export type Marketplace = {
         },
         {
           "name": "marketplace",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -656,7 +661,7 @@ export type Marketplace = {
         },
         {
           "name": "marketplace",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -754,6 +759,22 @@ export type Marketplace = {
           {
             "name": "mint",
             "type": "publicKey"
+          },
+          {
+            "name": "totalSol",
+            "type": "u64"
+          },
+          {
+            "name": "totalSpl",
+            "type": "u64"
+          },
+          {
+            "name": "totalSales",
+            "type": "u64"
+          },
+          {
+            "name": "totalSold",
+            "type": "u64"
           }
         ]
       }
@@ -857,35 +878,41 @@ export type Marketplace = {
       }
     }
   ],
-  "types": [
+  "errors": [
     {
-      "name": "ErrorCode",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "ErrFeeShouldLowerOrEqualThan10000"
-          },
-          {
-            "name": "ErrTryingToUnlistMoreThanOwned"
-          },
-          {
-            "name": "ErrCouldNotBuyEnoughItem"
-          },
-          {
-            "name": "ErrMetaDataMintDoesNotMatchItemMint"
-          },
-          {
-            "name": "ErrNftNotPartOfCollection"
-          },
-          {
-            "name": "DerivedKeyInvalid"
-          },
-          {
-            "name": "NotInitialized"
-          }
-        ]
-      }
+      "code": 6000,
+      "name": "ErrFeeShouldLowerOrEqualThan10000",
+      "msg": "Fee should be <= 10000"
+    },
+    {
+      "code": 6001,
+      "name": "ErrTryingToUnlistMoreThanOwned",
+      "msg": "Trying to unlist more than owned"
+    },
+    {
+      "code": 6002,
+      "name": "ErrCouldNotBuyEnoughItem",
+      "msg": "Could not buy the required quantity of items"
+    },
+    {
+      "code": 6003,
+      "name": "ErrMetaDataMintDoesNotMatchItemMint",
+      "msg": "metadata mint does not match item mint"
+    },
+    {
+      "code": 6004,
+      "name": "ErrNftNotPartOfCollection",
+      "msg": "nft not part of collection"
+    },
+    {
+      "code": 6005,
+      "name": "DerivedKeyInvalid",
+      "msg": "Derived key invalid"
+    },
+    {
+      "code": 6006,
+      "name": "NotInitialized",
+      "msg": "AccountNotInitialized"
     }
   ]
 };
@@ -1148,7 +1175,7 @@ export const IDL: Marketplace = {
         },
         {
           "name": "marketplace",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -1231,6 +1258,11 @@ export const IDL: Marketplace = {
         },
         {
           "name": "vault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "marketplace",
           "isMut": true,
           "isSigner": false
         },
@@ -1328,7 +1360,7 @@ export const IDL: Marketplace = {
         },
         {
           "name": "marketplace",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -1548,7 +1580,7 @@ export const IDL: Marketplace = {
         },
         {
           "name": "marketplace",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -1646,6 +1678,22 @@ export const IDL: Marketplace = {
           {
             "name": "mint",
             "type": "publicKey"
+          },
+          {
+            "name": "totalSol",
+            "type": "u64"
+          },
+          {
+            "name": "totalSpl",
+            "type": "u64"
+          },
+          {
+            "name": "totalSales",
+            "type": "u64"
+          },
+          {
+            "name": "totalSold",
+            "type": "u64"
           }
         ]
       }
@@ -1749,35 +1797,41 @@ export const IDL: Marketplace = {
       }
     }
   ],
-  "types": [
+  "errors": [
     {
-      "name": "ErrorCode",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "ErrFeeShouldLowerOrEqualThan10000"
-          },
-          {
-            "name": "ErrTryingToUnlistMoreThanOwned"
-          },
-          {
-            "name": "ErrCouldNotBuyEnoughItem"
-          },
-          {
-            "name": "ErrMetaDataMintDoesNotMatchItemMint"
-          },
-          {
-            "name": "ErrNftNotPartOfCollection"
-          },
-          {
-            "name": "DerivedKeyInvalid"
-          },
-          {
-            "name": "NotInitialized"
-          }
-        ]
-      }
+      "code": 6000,
+      "name": "ErrFeeShouldLowerOrEqualThan10000",
+      "msg": "Fee should be <= 10000"
+    },
+    {
+      "code": 6001,
+      "name": "ErrTryingToUnlistMoreThanOwned",
+      "msg": "Trying to unlist more than owned"
+    },
+    {
+      "code": 6002,
+      "name": "ErrCouldNotBuyEnoughItem",
+      "msg": "Could not buy the required quantity of items"
+    },
+    {
+      "code": 6003,
+      "name": "ErrMetaDataMintDoesNotMatchItemMint",
+      "msg": "metadata mint does not match item mint"
+    },
+    {
+      "code": 6004,
+      "name": "ErrNftNotPartOfCollection",
+      "msg": "nft not part of collection"
+    },
+    {
+      "code": 6005,
+      "name": "DerivedKeyInvalid",
+      "msg": "Derived key invalid"
+    },
+    {
+      "code": 6006,
+      "name": "NotInitialized",
+      "msg": "AccountNotInitialized"
     }
   ]
 };

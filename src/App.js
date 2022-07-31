@@ -29,7 +29,7 @@ require('@solana/wallet-adapter-react-ui/styles.css');
 
 const App = () => {
     // Can be set to 'devnet', 'testnet', or 'mainnet-beta'
-    const network = WalletAdapterNetwork.Devnet;
+    const network = process.env.REACT_APP_CLUSTER || WalletAdapterNetwork.Devnet;
     const { isExpended } = useStore();
     console.log(isExpended)
 

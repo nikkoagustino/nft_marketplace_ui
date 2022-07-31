@@ -8,6 +8,7 @@ import * as anchor from "@project-serum/anchor";
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 
 import { PublicKey } from "@solana/web3.js";
+import { collectionPubkey, itemCollectionPubkey } from '../app/api/config';
 
 const opts = {
     preflightCommitment: "processed"
@@ -65,6 +66,20 @@ const Sell = () => {
         obj.creator = new PublicKey(decoded.data.creators[0].address).toBase58();
         obj.creators = obj.data.properties.creators;
 
+        if (obj.creator.toBase58() === collectionPubkey.toBase58()) {
+            obj.type = 'nft';
+        }
+
+        if (obj.creator.toBase58() === itemCollectionPubkey.toBase58()) {
+            obj.type = 'item';
+        }
+
+
+        obj.attributesObject = {};
+        obj.attributes.map(attr => {
+            obj.attributesObject[attr.trait_type] = attr.value;
+        });
+
         setNftInfo(obj);
     }
 
@@ -106,11 +121,9 @@ const Sell = () => {
                 <p>Breed Count: 0</p>
                 <p>Attributes:</p>
                 <ul>
-                    <li>Head: Chameleon Purle</li>
-                    <li>Body: Wizard</li>
-                    <li>Weapon: Desert Eagle</li>
-                    <li>Headgear: Magician Hat</li>
-                    <li>Background: Cloud Stroke Yellow</li>
+                    {
+                        Object.keys(nftInfo.attributesObject).map(key => <li>{key}: {nftInfo.attributesObject[key]}</li>)
+                    }
                 </ul>
                 <span class="d-block">Listing Price (SOL)</span>
                 <input

@@ -20,10 +20,11 @@ import { METADATA_SCHEMA, Metadata } from './metadata';
 
 import idl from './js/types/marketplace.json'
 import { MARKETPLACE_PROGRAM_ID } from './js/constant'
+import { addTransaction } from '../../api';
 
 //create a connection of devnet
 const createConnection = () => {
-    return new Connection(clusterApiUrl("devnet"));
+    return new Connection(clusterApiUrl(process.env.REACT_APP_CLUSTER || "devnet"));
 };
 
 const getAllNftData = async (address) => {
@@ -108,9 +109,6 @@ export const FilterWalletNfts = async (address) => {
 }
 
 export const sell = async (provider, seller, nftDt, solPrice, tokenPrice) => {
-
-    console.log(nftDt, "nftDt0000000000")
-
     let sellerTokenAccount = await getAssociatedTokenAddress(mintPubkey, seller);
 
     let sellerAccountInfo = await provider.connection.getAccountInfo(sellerTokenAccount)
@@ -132,7 +130,7 @@ export const sell = async (provider, seller, nftDt, solPrice, tokenPrice) => {
     let collection = new Collection(provider, marketplace.marketplacePDA, collectionPDA)
 
     try {
-        await collection.sellAsset(
+        const txid = await collection.sellAsset(
             mint,
             sellerNftAssociatedTokenAccount,
             sellerTokenAccount,
@@ -141,6 +139,9 @@ export const sell = async (provider, seller, nftDt, solPrice, tokenPrice) => {
             new BN(1),
             seller
         )
+
+        addTransaction(txid, seller, null, nftDt.type, 1, solPrice);
+
         alert("Selling is a success.");
         return true;
     } catch (error) {
