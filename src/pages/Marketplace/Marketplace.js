@@ -17,7 +17,7 @@ const opts = {
 const Marketplace = () => {
 
     const { connection } = useConnection();
-    const { publicKey, signTransaction } = useWallet();
+    const { publicKey } = useWallet();
     const wallet = useWallet();
 
     async function getProvider() {
@@ -82,39 +82,8 @@ const Marketplace = () => {
         }])
     }, [])
 
-    const testFunc = async () => {
-        console.log("testFunc----------------")
-        let save_dt = {
-            seller: "3r9k82jXaJBQQbNrqf1rdEcxqJz9KwXHwBE3ucgqrxbi",
-            buyer: "FgLQFYNyaZ6kFhSofzrKBDwp6ZXDxFMdTCNARfCMEzt",
-            tx_id: "5fm8FNeos1oFZ8wW1az4jkagHzA5fZRewzSE1U7cEEYRXjcmuxNmhSafueresyqFMVJX7DMKYzX8cpsf9DK5q4jM",
-            tx_type: "items"
-        }
-
-        await axios.post('https://api.komoverse.io/v1/add-transaction', save_dt)
-            .then(function (response) {
-                console.log(response.data, "success");
-            })
-            .catch(function (error) {
-                console.log(error);
-            });
-
-        // axios({
-        //     method: 'post',
-        //     baseURL: 'https://api.komoverse.io/v1/',
-        //     url: '/add-transaction',
-        //     data: save_dt
-        //   }).then(response => {
-        //     console.log(response.data, "success");
-        //   })
-        //   .catch(error => {
-        //     console.log(error)
-        //   });
-    }
-
-
-    useEffect(async () => {
-        if (publicKey) {
+    useEffect(() => {
+        const fn = async () => {
             let cProvider = await getProvider();
             let sellNftOrders = await getListedNfts(cProvider, "nft");
             let sellItemOrders = await getListedNfts(cProvider, "item");
@@ -126,6 +95,9 @@ const Marketplace = () => {
             if (sellItemOrders.length) {
                 setItemList(sellItemOrders)
             }
+        }
+        if (publicKey) {
+            fn();
         }
     }, [publicKey])
 

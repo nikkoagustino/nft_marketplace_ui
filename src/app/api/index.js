@@ -1,20 +1,19 @@
 import axios from 'axios'
 
-import { Wallet, Provider, Program, web3, BN } from '@project-serum/anchor';
+import { Program, web3, BN } from '@project-serum/anchor';
 import {
     TOKEN_PROGRAM_ID,
-    ASSOCIATED_TOKEN_PROGRAM_ID,
     getAssociatedTokenAddress,
     createAssociatedTokenAccountInstruction
 } from "@solana/spl-token";
 
-import { Connection, clusterApiUrl, LAMPORTS_PER_SOL, Keypair, PublicKey } from "@solana/web3.js";
+import { Connection, clusterApiUrl, PublicKey } from "@solana/web3.js";
 
-import { mintPubkey, marketplacePDA, adminPubkey, collectionPubkey, itemCollectionPubkey } from './config'
+import { mintPubkey, marketplacePDA, collectionPubkey, itemCollectionPubkey } from './config'
 
 import { Marketplace } from './js/marketplace';
 import { Collection } from "./js/collection";
-import { getCollectionPDA, getSellOrderPDA, getMarketplacePDA, getEscrowPDA } from './js/getPDAs'
+import { getCollectionPDA, getSellOrderPDA } from './js/getPDAs'
 
 import * as borsh from 'borsh';
 import { METADATA_SCHEMA, Metadata } from './metadata';
@@ -27,16 +26,6 @@ const createConnection = () => {
     return new Connection(clusterApiUrl("devnet"));
 };
 
-//check solana on window. This is useful to fetch address of your wallet.
-const getProvider = () => {
-    if ("solana" in window) {
-        const provider = window.solana;
-        if (provider.isPhantom) {
-            return provider;
-        }
-    }
-};
-
 const getAllNftData = async (address) => {
     try {
         const connection = createConnection();
@@ -45,7 +34,7 @@ const getAllNftData = async (address) => {
         })
 
         const nfts = allTokenAccounts.value.filter(nft => nft.account.data.parsed.info.tokenAmount.decimals === 0 &&
-            nft.account.data.parsed.info.tokenAmount.uiAmount == 1);
+            nft.account.data.parsed.info.tokenAmount.uiAmount === 1);
         return nfts;
     } catch (error) {
         console.log(error);
@@ -343,10 +332,10 @@ export const buy = async (provider, buyer, nftInfo, payType) => {
         // assert.equal(buyerNftAccountAfterSell.amount.toNumber(), 1)
 
     } catch (error) {
-    console.log(error, "Transaction error in buy.");
-    alert("Failure")
-    return false;
-}
+        console.log(error, "Transaction error in buy.");
+        alert("Failure")
+        return false;
+    }
 }
 
 

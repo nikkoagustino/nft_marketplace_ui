@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import NftImg from "../assets/img/nft/9950.png";
 
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
@@ -8,7 +7,7 @@ import { getMetadata, decodeMetadata, sell } from "../app/api/index";
 import * as anchor from "@project-serum/anchor";
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 
-import { Connection, clusterApiUrl, LAMPORTS_PER_SOL, Keypair, PublicKey } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 
 const opts = {
     preflightCommitment: "processed"
@@ -19,10 +18,9 @@ const Sell = () => {
     const navigate = useNavigate();
 
     const { connection } = useConnection();
-    const { publicKey, signTransaction } = useWallet();
+    const { publicKey } = useWallet();
     const wallet = useWallet();
 
-    const [provider, setProvider] = useState(null);
     const [nftInfo, setNftInfo] = useState({
         data: {}
     });
@@ -37,10 +35,13 @@ const Sell = () => {
         return provider;
     }
 
-    useEffect(async () => {
-        if (mint) {
+    useEffect(() => {
+        const fn = async () => {
             let cProvider = await getProvider();
             await getNftMetadata(cProvider, mint);
+        }
+        if (mint) {
+            fn();
         }
     }, [publicKey])
 

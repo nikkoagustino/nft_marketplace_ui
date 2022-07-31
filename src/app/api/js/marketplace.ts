@@ -8,7 +8,7 @@ import { Keypair, PublicKey } from '@solana/web3.js'
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import { getCollectionPDA, getMarketplacePDA, getEscrowPDA } from './getPDAs'
 
-import { IdlAccounts, web3 } from "@project-serum/anchor";
+import { IdlAccounts } from "@project-serum/anchor";
 
 
 export class Marketplace {

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from "axios";
 
 import { getNFTInfoBySellOrder, buy } from "../../app/api/index";
 
@@ -16,7 +15,7 @@ const Buy = () => {
     const navigate = useNavigate();
 
     const { connection } = useConnection();
-    const { publicKey, signTransaction } = useWallet();
+    const { publicKey } = useWallet();
     const wallet = useWallet();
 
     const [nftInfo, setNftInfo] = useState({
@@ -31,16 +30,23 @@ const Buy = () => {
         return provider;
     }
 
-    useEffect(async () => {
+    useEffect(() => {
         if (mint) {
-            let cProvider = await getProvider();
-            let nftData = await getNFTInfoBySellOrder(cProvider, mint);
-            if (nftData) {
-                setNftInfo(nftData);
+            const fn = async () => {
+                let cProvider = await getProvider();
+                let nftData = await getNFTInfoBySellOrder(cProvider, mint);
+                if (nftData) {
+                    setNftInfo(nftData);
+                }
+                // await getNftMetadata(cProvider, mint);
             }
-            // await getNftMetadata(cProvider, mint);
+            fn();
         }
-    }, [publicKey])
+
+        return () => {
+
+        }
+    }, [mint])
 
     const handleBuy = async (type) => {
 
